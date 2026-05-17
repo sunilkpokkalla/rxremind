@@ -264,23 +264,6 @@ export class AuthManager {
       const session = JSON.parse(decodedValue) as UserSession;
       
       if (session && session.email && session.clinicId) {
-        // Sync clinic name in the background to ensure data freshness
-        if (isSupabaseEnabled && session.id !== 'demo-owner-uuid-12345') {
-          try {
-            const dbClinic = await DBBroker.getClinicByOwner(session.id);
-            if (dbClinic && dbClinic.name !== session.clinicName) {
-              session.clinicName = dbClinic.name;
-              cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                maxAge: 60 * 60 * 24 * 7,
-                path: '/',
-              });
-            }
-          } catch {
-            // Ignore background sync errors to maintain flawless user experience
-          }
-        }
         return session;
       }
       return null;
