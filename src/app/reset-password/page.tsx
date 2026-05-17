@@ -1,28 +1,26 @@
 'use client';
 
-import React, { useState, useActionState } from 'react';
+import React, { useState, useActionState, Suspense } from 'react';
 import Link from 'next/link';
-import { signUpAction } from '@/app/actions';
+import { useSearchParams } from 'next/navigation';
+import { resetPasswordAction } from '@/app/actions';
 import { 
   ActivitySquare, 
-  Mail, 
   Lock, 
-  Building2, 
-  Phone, 
   ArrowRight, 
   BadgeCheck, 
   MessageSquare,
   Clock
 } from 'lucide-react';
 
-export default function SignupPage() {
-  const [state, formAction] = useActionState(signUpAction, null);
+function ResetPasswordForm() {
+  const [state, formAction] = useActionState(resetPasswordAction, null);
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isMounted, setIsMounted] = useState(false);
 
-  React.useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const searchParams = useSearchParams();
+  const recoveryEmail = searchParams.get('email') || '';
 
   const handleFormSubmit = () => {
     setIsLoading(true);
@@ -30,7 +28,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      {/* Left panel: Registration Form */}
+      {/* Left panel: Reset Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white z-10 shadow-xl">
         <div className="mx-auto w-full max-w-md">
           {/* Header */}
@@ -42,88 +40,34 @@ export default function SignupPage() {
           </div>
 
           <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-            Register your Clinic
+            Select New Password
           </h2>
           <p className="mt-2.5 text-sm text-slate-500">
-            Already have an account?{' '}
-            <Link href="/login" className="font-semibold text-primary hover:text-primary-hover transition">
-              Sign in to your dashboard
-            </Link>
+            {recoveryEmail ? (
+              <span>
+                Recovering account credentials for <strong className="text-slate-800">{recoveryEmail}</strong>
+              </span>
+            ) : (
+              <span>Configure a new password to secure your medical clinic account</span>
+            )}
           </p>
 
-          {/* Registration Form */}
+          {/* Reset Form */}
           <form 
             action={formAction} 
             onSubmit={handleFormSubmit}
             className="mt-8 space-y-6"
           >
             {state?.error && (
-              <div className="p-3.5 bg-danger-light border border-danger/10 text-danger text-sm font-semibold rounded-xl">
+              <div className="p-3.5 bg-danger-light border border-danger/10 text-danger text-sm font-semibold rounded-xl animate-shake">
                 {state.error}
               </div>
             )}
 
             <div className="space-y-4">
               <div>
-                <label htmlFor="clinicName" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Medical Clinic Name
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <input
-                    id="clinicName"
-                    name="clinicName"
-                    type="text"
-                    required
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition text-sm"
-                    placeholder="CareFirst Pediatric Clinic"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="clinicPhone" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Clinic Phone Number
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Phone className="h-4 w-4" />
-                  </div>
-                  <input
-                    id="clinicPhone"
-                    name="clinicPhone"
-                    type="tel"
-                    required
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition text-sm"
-                    placeholder="+1 (555) 019-9988"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label htmlFor="email" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Owner Email Address
-                </label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="h-4 w-4" />
-                  </div>
-                  <input
-                    id="email"
-                    name="email"
-                    type="email"
-                    required
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition text-sm"
-                    placeholder="dr.smith@yourclinic.com"
-                  />
-                </div>
-              </div>
-
-              <div>
                 <label htmlFor="password" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Select Password
+                  New Password
                 </label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -134,22 +78,34 @@ export default function SignupPage() {
                     name="password"
                     type="password"
                     required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition text-sm"
                     placeholder="Min. 8 characters"
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="mt-4">
-              {isMounted && (
-                <div 
-                  className="cf-turnstile" 
-                  data-sitekey="0x4AAAAAADROiE3Sw9ORY3R6" 
-                  data-theme="light"
-                />
-              )}
+              <div>
+                <label htmlFor="confirmPassword" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                  Confirm Password
+                </label>
+                <div className="mt-1 relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <Lock className="h-4 w-4" />
+                  </div>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition text-sm"
+                    placeholder="Repeat new password"
+                  />
+                </div>
+              </div>
             </div>
 
             <div>
@@ -164,11 +120,11 @@ export default function SignupPage() {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    <span>Setting up Clinic...</span>
+                    <span>Saving new password...</span>
                   </span>
                 ) : (
                   <>
-                    <span>Create Clinic Account</span>
+                    <span>Confirm New Password</span>
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </>
                 )}
@@ -239,5 +195,17 @@ export default function SignupPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

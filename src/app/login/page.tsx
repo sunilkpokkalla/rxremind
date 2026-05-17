@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useActionState } from 'react';
+import React, { useState, useActionState, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { signInAction } from '@/app/actions';
 import { 
   ActivitySquare, 
@@ -14,11 +15,19 @@ import {
   Clock
 } from 'lucide-react';
 
-export default function LoginPage() {
+function LoginForm() {
   const [state, formAction] = useActionState(signInAction, null);
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const searchParams = useSearchParams();
+  const resetSuccess = searchParams.get('reset') === 'success';
 
   // Auto-populates credentials and submits form
   const handleQuickDemoClick = (e: React.MouseEvent) => {
@@ -52,6 +61,14 @@ export default function LoginPage() {
               register your medical clinic today
             </Link>
           </p>
+
+          {/* Password Reset Success Alert */}
+          {resetSuccess && (
+            <div className="mt-6 p-4 bg-emerald-50 border border-emerald-500/10 text-emerald-800 text-sm font-medium rounded-xl space-y-1 animate-fade-in">
+              <p className="font-bold">Password Updated!</p>
+              <p className="text-slate-600">Your password was successfully reset. Please log in below with your new password.</p>
+            </div>
+          )}
 
           {/* Quick Demo Login */}
           <div className="mt-6 p-4 bg-primary-light/50 border border-primary/10 rounded-2xl shadow-sm">
@@ -108,9 +125,17 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
-                  Password
-                </label>
+                <div className="flex justify-between items-center">
+                  <label htmlFor="password" className="block text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    Password
+                  </label>
+                  <Link 
+                    href="/forgot-password" 
+                    className="text-xs font-semibold text-primary hover:text-primary-hover transition"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
                     <Lock className="h-4 w-4" />
@@ -127,6 +152,17 @@ export default function LoginPage() {
                   />
                 </div>
               </div>
+            </div>
+
+            {/* Cloudflare Turnstile CAPTCHA */}
+            <div className="mt-4">
+              {isMounted && (
+                <div 
+                  className="cf-turnstile" 
+                  data-sitekey="0x4AAAAAADROiE3Sw9ORY3R6" 
+                  data-theme="light"
+                />
+              )}
             </div>
 
             <div>
@@ -216,5 +252,17 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }

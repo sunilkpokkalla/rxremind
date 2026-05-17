@@ -4,14 +4,63 @@ import { AuthManager } from '@/lib/auth';
 import { DBBroker } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+
+// SECURE BACKEND CAPTCHA TOKEN VERIFICATION
+async function verifyTurnstileToken(token: string | null, email?: string): Promise<{ success: boolean; error?: string }> {
+  // Always bypass validation for the mock demo walkthrough account
+  if (email === 'owner@rxremind-demo.com') {
+    return { success: true };
+  }
+
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  // If the secret key is not configured in the environment, fallback gracefully (e.g., local developer environment)
+  if (!secretKey) {
+    return { success: true };
+  }
+
+  if (!token) {
+    return { success: false, error: 'Security verification (CAPTCHA) is required.' };
+  }
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      return { success: true };
+    } else {
+      return { success: false, error: 'Security verification failed (CAPTCHA invalid). Please reload and try again.' };
+    }
+  } catch (error) {
+    console.error('Turnstile verification failed:', error);
+    return { success: false, error: 'Network error verifying security captcha.' };
+  }
+}
 
 // SIGN IN ACTION
 export async function signInAction(prevState: any, formData: FormData) {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
+  const turnstileToken = formData.get('cf-turnstile-response') as string | null;
 
   if (!email) {
     return { success: false, error: 'Email is required' };
+  }
+
+  // Verify CAPTCHA
+  const captcha = await verifyTurnstileToken(turnstileToken, email);
+  if (!captcha.success) {
+    return { success: false, error: captcha.error };
   }
 
   const result = await AuthManager.signIn(email, password);
@@ -30,9 +79,16 @@ export async function signUpAction(prevState: any, formData: FormData) {
   const password = formData.get('password') as string;
   const clinicName = formData.get('clinicName') as string;
   const clinicPhone = formData.get('clinicPhone') as string;
+  const turnstileToken = formData.get('cf-turnstile-response') as string | null;
 
   if (!email || !password || !clinicName) {
     return { success: false, error: 'Email, password, and clinic name are required' };
+  }
+
+  // Verify CAPTCHA
+  const captcha = await verifyTurnstileToken(turnstileToken, email);
+  if (!captcha.success) {
+    return { success: false, error: captcha.error };
   }
 
   const result = await AuthManager.signUp(email, password, clinicName, clinicPhone);
@@ -42,6 +98,81 @@ export async function signUpAction(prevState: any, formData: FormData) {
     redirect('/');
   } else {
     return { success: false, error: result.error || 'Registration failed' };
+  }
+}
+
+// FORGOT PASSWORD ACTION
+export async function forgotPasswordAction(prevState: any, formData: FormData) {
+  const email = formData.get('email') as string;
+  const turnstileToken = formData.get('cf-turnstile-response') as string | null;
+
+  if (!email) {
+    return { success: false, error: 'Email address is required' };
+  }
+
+  // Verify CAPTCHA
+  const captcha = await verifyTurnstileToken(turnstileToken, email);
+  if (!captcha.success) {
+    return { success: false, error: captcha.error };
+  }
+
+  try {
+    const headersList = await headers();
+    const host = headersList.get('host');
+    const proto = headersList.get('x-forwarded-proto') || 'http';
+    const origin = `${proto}://${host}`;
+
+    const result = await AuthManager.forgotPassword(email, origin);
+
+    if (result.success) {
+      return { 
+        success: true, 
+        message: 'A password recovery link has been simulated / sent to your email address.',
+        simulatedLink: result.simulatedLink 
+      };
+    } else {
+      return { success: false, error: result.error || 'Password recovery failed.' };
+    }
+  } catch (err: any) {
+    return { success: false, error: err.message || 'An unexpected error occurred.' };
+  }
+}
+
+// RESET PASSWORD ACTION
+export async function resetPasswordAction(prevState: any, formData: FormData) {
+  const password = formData.get('password') as string;
+  const confirmPassword = formData.get('confirmPassword') as string;
+
+  if (!password || !confirmPassword) {
+    return { success: false, error: 'Both password fields are required.' };
+  }
+
+  if (password.length < 8) {
+    return { success: false, error: 'Password must be at least 8 characters long.' };
+  }
+
+  if (password !== confirmPassword) {
+    return { success: false, error: 'Passwords do not match.' };
+  }
+
+  let success = false;
+  let errorMsg = 'Failed to update your password.';
+
+  try {
+    const result = await AuthManager.resetPassword(password);
+    if (result.success) {
+      success = true;
+    } else {
+      errorMsg = result.error || 'Failed to update your password.';
+    }
+  } catch (err: any) {
+    errorMsg = err.message || 'An unexpected error occurred.';
+  }
+
+  if (success) {
+    redirect('/login?reset=success');
+  } else {
+    return { success: false, error: errorMsg };
   }
 }
 

@@ -59,9 +59,10 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env
 const isSupabaseEnabled = supabaseUrl !== '' && supabaseAnonKey !== '';
 
 
-let supabaseClient: SupabaseClient | null = null;
-if (isSupabaseEnabled) {
-  supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+// Helper function to dynamically initialize cookie-synchronized Supabase client on demand
+async function getSupabaseClient() {
+  const { createSupabaseServer } = await import('./supabaseServer');
+  return await createSupabaseServer();
 }
 
 // Generate high-fidelity seed data for the local fallback
@@ -338,8 +339,9 @@ export class DBBroker {
 
   // CLINICS API
   static async getAllClinics(): Promise<Clinic[]> {
-    if (isSupabaseEnabled && supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled) {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('clinics')
         .select('*');
       if (error) throw error;
@@ -351,9 +353,10 @@ export class DBBroker {
   }
 
   static async getClinicByOwner(ownerId: string): Promise<Clinic | null> {
-    if (isSupabaseEnabled && supabaseClient && ownerId !== 'demo-owner-uuid-12345') {
+    if (isSupabaseEnabled && ownerId !== 'demo-owner-uuid-12345') {
       if (!isValidUUID(ownerId)) return null;
-      const { data, error } = await supabaseClient
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('clinics')
         .select('*')
         .eq('owner_id', ownerId)
@@ -368,9 +371,10 @@ export class DBBroker {
   }
 
   static async getClinicById(id: string): Promise<Clinic | null> {
-    if (isSupabaseEnabled && supabaseClient && id !== 'demo-clinic-uuid-12345') {
+    if (isSupabaseEnabled && id !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(id)) return null;
-      const { data, error } = await supabaseClient
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('clinics')
         .select('*')
         .eq('id', id)
@@ -391,8 +395,9 @@ export class DBBroker {
       created_at: new Date().toISOString()
     };
 
-    if (isSupabaseEnabled && supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled) {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('clinics')
         .insert([clinic])
         .select()
@@ -408,9 +413,10 @@ export class DBBroker {
   }
 
   static async updateClinic(id: string, updates: Partial<Clinic>): Promise<Clinic> {
-    if (isSupabaseEnabled && supabaseClient) {
+    if (isSupabaseEnabled && id !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(id)) throw new Error('Invalid UUID');
-      const { data, error } = await supabaseClient
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('clinics')
         .update(updates)
         .eq('id', id)
@@ -430,9 +436,10 @@ export class DBBroker {
 
   // PATIENTS API
   static async getPatients(clinicId: string): Promise<Patient[]> {
-    if (isSupabaseEnabled && supabaseClient && clinicId !== 'demo-clinic-uuid-12345') {
+    if (isSupabaseEnabled && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
-      const { data, error } = await supabaseClient
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('patients')
         .select('*')
         .eq('clinic_id', clinicId)
@@ -469,8 +476,9 @@ export class DBBroker {
   }
 
   static async getPatientById(id: string): Promise<Patient | null> {
-    if (isSupabaseEnabled && supabaseClient && isValidUUID(id)) {
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled && isValidUUID(id)) {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('patients')
         .select('*')
         .eq('id', id)
@@ -491,8 +499,9 @@ export class DBBroker {
       created_at: new Date().toISOString()
     };
 
-    if (isSupabaseEnabled && supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled && patient.clinic_id !== 'demo-clinic-uuid-12345') {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('patients')
         .insert([patient])
         .select()
@@ -508,9 +517,9 @@ export class DBBroker {
   }
 
   static async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
-    if (isSupabaseEnabled && supabaseClient) {
-      if (!isValidUUID(id)) throw new Error('Invalid UUID');
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled && isValidUUID(id)) {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('patients')
         .update(updates)
         .eq('id', id)
@@ -530,9 +539,9 @@ export class DBBroker {
   }
 
   static async deletePatient(id: string): Promise<boolean> {
-    if (isSupabaseEnabled && supabaseClient) {
-      if (!isValidUUID(id)) return false;
-      const { error } = await supabaseClient
+    if (isSupabaseEnabled && isValidUUID(id)) {
+      const supabase = await getSupabaseClient();
+      const { error } = await supabase
         .from('patients')
         .delete()
         .eq('id', id);
@@ -551,9 +560,10 @@ export class DBBroker {
 
   // REMINDERS API
   static async getReminders(clinicId: string): Promise<Reminder[]> {
-    if (isSupabaseEnabled && supabaseClient && clinicId !== 'demo-clinic-uuid-12345') {
+    if (isSupabaseEnabled && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
-      const { data, error } = await supabaseClient
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('reminders')
         .select('*')
         .eq('clinic_id', clinicId)
@@ -575,8 +585,9 @@ export class DBBroker {
       created_at: new Date().toISOString()
     };
 
-    if (isSupabaseEnabled && supabaseClient) {
-      const { data, error } = await supabaseClient
+    if (isSupabaseEnabled && reminder.clinic_id !== 'demo-clinic-uuid-12345') {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
         .from('reminders')
         .insert([reminder])
         .select()

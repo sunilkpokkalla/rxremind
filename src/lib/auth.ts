@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
-import { createClient } from '@supabase/supabase-js';
 import { DBBroker } from './db';
+import { createSupabaseServer } from './supabaseServer';
 
 export interface UserSession {
   id: string;
@@ -12,7 +12,6 @@ export interface UserSession {
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 const isSupabaseEnabled = supabaseUrl !== '' && supabaseAnonKey !== '';
-
 
 const SESSION_COOKIE_NAME = 'rxremind_session';
 
@@ -43,12 +42,13 @@ export class AuthManager {
     }
 
     if (isSupabaseEnabled) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const supabase = await createSupabaseServer();
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password: password || 'password',
       });
       if (error) return { success: false, error: error.message };
+      if (!data.user) return { success: false, error: 'Authentication failed' };
 
       // Fetch or create clinic
       let clinic = await DBBroker.getClinicByOwner(data.user.id);
@@ -84,7 +84,6 @@ export class AuthManager {
       return { success: true, session };
     } else {
       // Mock Auth Fallback Mode
-      // Allow any email + password (password: password or demo defaults)
       const mockEmail = email.toLowerCase().trim();
       let session: UserSession;
 
@@ -135,7 +134,7 @@ export class AuthManager {
   // SIGN UP
   static async signUp(email: string, password?: string, clinicName?: string, clinicPhone?: string): Promise<{ success: boolean; error?: string; session?: UserSession }> {
     if (isSupabaseEnabled) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const supabase = await createSupabaseServer();
       const { data, error } = await supabase.auth.signUp({
         email,
         password: password || 'password',
@@ -204,13 +203,52 @@ export class AuthManager {
     }
   }
 
+  // FORGOT PASSWORD
+  static async forgotPassword(email: string, origin: string): Promise<{ success: boolean; error?: string; simulatedLink?: string }> {
+    const cleanEmail = email.toLowerCase().trim();
+
+    if (isSupabaseEnabled) {
+      const supabase = await createSupabaseServer();
+      const { error } = await supabase.auth.resetPasswordForEmail(cleanEmail, {
+        redirectTo: `${origin}/api/auth/callback?next=/reset-password`,
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } else {
+      // Mock mode forgot password
+      const clinics = await DBBroker.getAllClinics();
+      const clinic = clinics.find((c) => c.email.toLowerCase().trim() === cleanEmail);
+      if (!clinic) {
+        return { success: false, error: 'No registered medical clinic found under this email address.' };
+      }
+
+      const simulatedLink = `/reset-password?email=${encodeURIComponent(cleanEmail)}`;
+      return { success: true, simulatedLink };
+    }
+  }
+
+  // RESET PASSWORD
+  static async resetPassword(password: string): Promise<{ success: boolean; error?: string }> {
+    if (isSupabaseEnabled) {
+      const supabase = await createSupabaseServer();
+      const { error } = await supabase.auth.updateUser({
+        password: password,
+      });
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } else {
+      return { success: true };
+    }
+  }
+
   // SIGN OUT
   static async signOut(): Promise<boolean> {
+    const cookieStore = await cookies();
     if (isSupabaseEnabled) {
-      const supabase = createClient(supabaseUrl, supabaseAnonKey);
+      const supabase = await createSupabaseServer();
       await supabase.auth.signOut();
     }
-    (await cookies()).delete(SESSION_COOKIE_NAME);
+    cookieStore.delete(SESSION_COOKIE_NAME);
     return true;
   }
 
@@ -218,32 +256,75 @@ export class AuthManager {
   static async getCurrentUser(): Promise<UserSession | null> {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
-    if (!sessionCookie) return null;
 
-    try {
-      const session = JSON.parse(sessionCookie.value) as UserSession;
-      
-      // If Supabase is enabled, ensure session ID is a valid UUID or the mock demo clinic owner ID
-      if (isSupabaseEnabled) {
-        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!UUID_REGEX.test(session.id) && session.id !== 'demo-owner-uuid-12345') {
-          // Self-heal and destroy legacy mock cookies instantly
-          cookieStore.delete(SESSION_COOKIE_NAME);
-          return null;
-        }
+    // 1. In local mock mode, fetch custom cookie directly
+    if (!isSupabaseEnabled) {
+      if (!sessionCookie) return null;
+      try {
+        return JSON.parse(sessionCookie.value) as UserSession;
+      } catch {
+        return null;
       }
-      
-      // Keep clinic name in session synced with DB updates
-      const dbClinic = await DBBroker.getClinicByOwner(session.id);
-      if (dbClinic && dbClinic.name !== session.clinicName) {
-        session.clinicName = dbClinic.name;
-        // Update cookie
+    }
+
+    // 2. In Supabase Mode:
+    // If the session matches the demo owner, let it bypass immediately
+    if (sessionCookie) {
+      try {
+        const parsed = JSON.parse(sessionCookie.value) as UserSession;
+        if (parsed.id === 'demo-owner-uuid-12345') {
+          return parsed;
+        }
+      } catch {}
+    }
+
+    // Use server Supabase client to sync session validation
+    try {
+      const supabase = await createSupabaseServer();
+      const { data: { user }, error } = await supabase.auth.getUser();
+
+      if (error || !user) {
+        if (sessionCookie) {
+          cookieStore.delete(SESSION_COOKIE_NAME);
+        }
+        return null;
+      }
+
+      let session: UserSession | null = null;
+      if (sessionCookie) {
+        try {
+          session = JSON.parse(sessionCookie.value) as UserSession;
+        } catch {}
+      }
+
+      if (!session || session.id !== user.id) {
+        const clinic = await DBBroker.getClinicByOwner(user.id);
+        if (!clinic) return null;
+
+        session = {
+          id: user.id,
+          email: user.email || '',
+          clinicId: clinic.id,
+          clinicName: clinic.name,
+        };
+
         cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 60 * 60 * 24 * 7,
           path: '/',
         });
+      } else {
+        const dbClinic = await DBBroker.getClinicByOwner(session.id);
+        if (dbClinic && dbClinic.name !== session.clinicName) {
+          session.clinicName = dbClinic.name;
+          cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 60 * 60 * 24 * 7,
+            path: '/',
+          });
+        }
       }
 
       return session;

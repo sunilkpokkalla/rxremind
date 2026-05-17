@@ -4,6 +4,7 @@ import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import { AuthManager } from "@/lib/auth";
 import { signOutAction } from "./actions";
+import Script from "next/script";
 
 const inter = Inter({ 
   subsets: ["latin"],
@@ -26,6 +27,10 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body className="antialiased font-sans bg-background text-foreground">
+        <Script 
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js" 
+          strategy="afterInteractive" 
+        />
         {session ? (
           <div className="min-h-screen flex flex-col md:flex-row">
             {/* Sidebar navigation */}
