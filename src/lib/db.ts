@@ -342,7 +342,7 @@ export class DBBroker {
   }
 
   static async getClinicByOwner(ownerId: string): Promise<Clinic | null> {
-    if (isSupabaseEnabled && supabaseClient) {
+    if (isSupabaseEnabled && supabaseClient && ownerId !== 'demo-owner-uuid-12345') {
       if (!isValidUUID(ownerId)) return null;
       const { data, error } = await supabaseClient
         .from('clinics')
@@ -359,7 +359,7 @@ export class DBBroker {
   }
 
   static async getClinicById(id: string): Promise<Clinic | null> {
-    if (isSupabaseEnabled && supabaseClient) {
+    if (isSupabaseEnabled && supabaseClient && id !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(id)) return null;
       const { data, error } = await supabaseClient
         .from('clinics')
@@ -421,7 +421,7 @@ export class DBBroker {
 
   // PATIENTS API
   static async getPatients(clinicId: string): Promise<Patient[]> {
-    if (isSupabaseEnabled && supabaseClient) {
+    if (isSupabaseEnabled && supabaseClient && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
       const { data, error } = await supabaseClient
         .from('patients')
@@ -460,8 +460,7 @@ export class DBBroker {
   }
 
   static async getPatientById(id: string): Promise<Patient | null> {
-    if (isSupabaseEnabled && supabaseClient) {
-      if (!isValidUUID(id)) return null;
+    if (isSupabaseEnabled && supabaseClient && isValidUUID(id)) {
       const { data, error } = await supabaseClient
         .from('patients')
         .select('*')
@@ -543,7 +542,7 @@ export class DBBroker {
 
   // REMINDERS API
   static async getReminders(clinicId: string): Promise<Reminder[]> {
-    if (isSupabaseEnabled && supabaseClient) {
+    if (isSupabaseEnabled && supabaseClient && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
       const { data, error } = await supabaseClient
         .from('reminders')

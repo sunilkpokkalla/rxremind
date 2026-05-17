@@ -23,6 +23,25 @@ export class AuthManager {
 
   // SIGN IN
   static async signIn(email: string, password?: string): Promise<{ success: boolean; error?: string; session?: UserSession }> {
+    const cleanEmail = email.toLowerCase().trim();
+
+    // Bypass Supabase and allow instant demo walkthrough on live site
+    if (cleanEmail === 'owner@rxremind-demo.com') {
+      const session: UserSession = {
+        id: 'demo-owner-uuid-12345',
+        email: 'owner@rxremind-demo.com',
+        clinicId: 'demo-clinic-uuid-12345',
+        clinicName: 'RxRemind Premium Medical Clinic',
+      };
+      (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 7, // 1 week
+        path: '/',
+      });
+      return { success: true, session };
+    }
+
     if (isSupabaseEnabled) {
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -204,10 +223,10 @@ export class AuthManager {
     try {
       const session = JSON.parse(sessionCookie.value) as UserSession;
       
-      // If Supabase is enabled, ensure session ID is a valid UUID
+      // If Supabase is enabled, ensure session ID is a valid UUID or the mock demo clinic owner ID
       if (isSupabaseEnabled) {
         const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        if (!UUID_REGEX.test(session.id)) {
+        if (!UUID_REGEX.test(session.id) && session.id !== 'demo-owner-uuid-12345') {
           // Self-heal and destroy legacy mock cookies instantly
           cookieStore.delete(SESSION_COOKIE_NAME);
           return null;
