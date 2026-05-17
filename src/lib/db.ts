@@ -288,10 +288,15 @@ function getSeedData(): LocalDB {
 }
 
 // Local Database JSON Helpers
+let memoryDB: LocalDB | null = null;
+
 function readLocalDB(): LocalDB {
   try {
     if (!fs) {
-      return { clinics: [], patients: [], reminders: [] };
+      if (!memoryDB) {
+        memoryDB = getSeedData();
+      }
+      return memoryDB;
     }
     if (!fs.existsSync(DB_FILE_PATH)) {
       const seed = getSeedData();
@@ -302,11 +307,15 @@ function readLocalDB(): LocalDB {
     return JSON.parse(content);
   } catch (err) {
     console.error('Error reading local JSON db:', err);
-    return { clinics: [], patients: [], reminders: [] };
+    if (!memoryDB) {
+      memoryDB = getSeedData();
+    }
+    return memoryDB;
   }
 }
 
 function writeLocalDB(data: LocalDB): void {
+  memoryDB = data;
   try {
     if (!fs) return;
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
