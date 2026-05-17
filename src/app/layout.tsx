@@ -27,10 +27,6 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${inter.variable}`}>
       <body className="antialiased font-sans bg-background text-foreground">
-        <Script 
-          src="https://challenges.cloudflare.com/turnstile/v0/api.js" 
-          strategy="afterInteractive" 
-        />
         {session ? (
           <div className="min-h-screen flex flex-col md:flex-row">
             {/* Sidebar navigation */}

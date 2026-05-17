@@ -3,6 +3,7 @@
 import React, { useState, useActionState, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
+import Script from 'next/script';
 import { signInAction } from '@/app/actions';
 import { 
   ActivitySquare, 
@@ -24,6 +25,17 @@ function LoginForm() {
 
   React.useEffect(() => {
     setIsMounted(true);
+    // Explicitly scan the DOM for .cf-turnstile elements after a tiny delay
+    const timer = setTimeout(() => {
+      if (typeof window !== 'undefined' && (window as any).turnstile) {
+        try {
+          (window as any).turnstile.implicitRender();
+        } catch (e) {
+          // ignore already rendered errors
+        }
+      }
+    }, 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const searchParams = useSearchParams();
@@ -157,11 +169,26 @@ function LoginForm() {
             {/* Cloudflare Turnstile CAPTCHA */}
             <div className="mt-4">
               {isMounted && (
-                <div 
-                  className="cf-turnstile" 
-                  data-sitekey="0x4AAAAAADROiE3Sw9ORY3R6" 
-                  data-theme="light"
-                />
+                <>
+                  <Script 
+                    src="https://challenges.cloudflare.com/turnstile/v0/api.js" 
+                    strategy="afterInteractive"
+                    onLoad={() => {
+                      if (typeof window !== 'undefined' && (window as any).turnstile) {
+                        try {
+                          (window as any).turnstile.implicitRender();
+                        } catch (e) {
+                          // ignore already rendered errors
+                        }
+                      }
+                    }}
+                  />
+                  <div 
+                    className="cf-turnstile" 
+                    data-sitekey="0x4AAAAAADROiE3Sw9ORY3R6" 
+                    data-theme="light"
+                  />
+                </>
               )}
             </div>
 
