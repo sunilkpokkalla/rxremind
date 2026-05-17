@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Fetch parent clinic details
-    const clinic = await DBBroker.getClinicByOwner(patient.clinic_id);
+    const clinic = await DBBroker.getClinicById(patient.clinic_id);
     if (!clinic) {
       return NextResponse.json(
         { success: false, error: 'Associated clinic not found' },

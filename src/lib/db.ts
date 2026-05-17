@@ -336,7 +336,6 @@ export class DBBroker {
   }
 
   static async getClinicByOwner(ownerId: string): Promise<Clinic | null> {
-
     if (isSupabaseEnabled && supabaseClient) {
       const { data, error } = await supabaseClient
         .from('clinics')
@@ -347,8 +346,23 @@ export class DBBroker {
       return data;
     } else {
       const db = readLocalDB();
-      // In local mode, we bind the clinic directly or return the demo one
-      const clinic = db.clinics.find((c) => c.owner_id === ownerId || c.owner_id === 'demo-owner-uuid-12345');
+      const clinic = db.clinics.find((c) => c.owner_id === ownerId);
+      return clinic || null;
+    }
+  }
+
+  static async getClinicById(id: string): Promise<Clinic | null> {
+    if (isSupabaseEnabled && supabaseClient) {
+      const { data, error } = await supabaseClient
+        .from('clinics')
+        .select('*')
+        .eq('id', id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    } else {
+      const db = readLocalDB();
+      const clinic = db.clinics.find((c) => c.id === id);
       return clinic || null;
     }
   }
@@ -558,7 +572,7 @@ export class DBBroker {
   // TRIGGERS A DAILY REMINDER SCAN (CRON LOGIC)
   // Calculates next_refill_date = today + reminder_days_before
   static async triggerReminderScan(clinicId: string): Promise<{ scanned: number; sent: number }> {
-    const clinic = await this.getClinicByOwner(clinicId);
+    const clinic = await this.getClinicById(clinicId);
     if (!clinic) throw new Error('Clinic not found');
 
     const patients = await this.getPatients(clinic.id);

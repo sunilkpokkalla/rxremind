@@ -70,7 +70,7 @@ export async function sendSingleReminderAction(patientId: string) {
   const patient = await DBBroker.getPatientById(patientId);
   if (!patient) throw new Error('Patient not found');
   
-  const clinic = await DBBroker.getClinicByOwner(patient.clinic_id);
+  const clinic = await DBBroker.getClinicById(patient.clinic_id);
   if (!clinic) throw new Error('Clinic not found');
 
   let msg = clinic.reminder_template || '';
@@ -203,6 +203,5 @@ export async function updatePatientAction(patientId: string, prevState: any, for
   revalidatePath('/');
   redirect('/patients');
 }
-
 
 
