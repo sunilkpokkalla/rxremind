@@ -1,0 +1,228 @@
+{
+  "clinics": [
+    {
+      "id": "demo-clinic-uuid-12345",
+      "owner_id": "demo-owner-uuid-12345",
+      "name": "RxRemind Premium Medical Clinic",
+      "email": "owner@rxremind-demo.com",
+      "phone": "+1 (555) 934-2391",
+      "logo_url": "",
+      "plan": "Growth",
+      "reminder_days_before": 3,
+      "auto_reminders": true,
+      "reminder_template": "Hi {{patient_name}}, this is a friendly reminder from {{clinic_name}} that your prescription for {{medication_name}} is due for a refill on {{refill_date}}. Reply YES to confirm.",
+      "created_at": "2026-04-17T14:36:53.842Z"
+    }
+  ],
+  "patients": [
+    {
+      "id": "patient-1",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Sarah Connor",
+      "phone": "+1 (555) 123-4567",
+      "email": "sarah.connor@sky.net",
+      "medication_name": "Lisinopril 10mg (Blood Pressure)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-06-01",
+      "reminder_channel": "WhatsApp",
+      "status": "confirmed",
+      "created_at": "2026-05-07T14:36:53.842Z"
+    },
+    {
+      "id": "patient-2",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Bruce Wayne",
+      "phone": "+1 (555) 987-6543",
+      "email": "bruce@waynecorp.com",
+      "medication_name": "Atorvastatin 20mg (Cholesterol)",
+      "refill_frequency_days": 90,
+      "next_refill_date": "2026-05-20",
+      "reminder_channel": "SMS",
+      "status": "pending",
+      "created_at": "2026-04-02T14:36:53.842Z"
+    },
+    {
+      "id": "patient-3",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Peter Parker",
+      "phone": "+1 (555) 555-0199",
+      "email": "peter.parker@dailybugle.com",
+      "medication_name": "Albuterol Inhaler (Asthma)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-15",
+      "reminder_channel": "WhatsApp",
+      "status": "overdue",
+      "created_at": "2026-05-05T14:36:53.842Z"
+    },
+    {
+      "id": "patient-4",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Clark Kent",
+      "phone": "+1 (555) 777-8888",
+      "email": "clark@dailyplanet.com",
+      "medication_name": "Levothyroxine 50mcg (Thyroid)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-20",
+      "reminder_channel": "Email",
+      "status": "pending",
+      "created_at": "2026-05-02T14:36:53.842Z"
+    },
+    {
+      "id": "patient-5",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Diana Prince",
+      "phone": "+1 (555) 444-3333",
+      "email": "diana@louvre.museum",
+      "medication_name": "Metformin 500mg (Diabetes)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-06-11",
+      "reminder_channel": "WhatsApp",
+      "status": "confirmed",
+      "created_at": "2026-05-12T14:36:53.842Z"
+    },
+    {
+      "id": "patient-6",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Tony Stark",
+      "phone": "+1 (555) 300-3000",
+      "email": "tony@starkindustries.com",
+      "medication_name": "Amlodipine 5mg (Blood Pressure)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-13",
+      "reminder_channel": "SMS",
+      "status": "overdue",
+      "created_at": "2026-04-27T14:36:53.842Z"
+    },
+    {
+      "id": "patient-7",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Barry Allen",
+      "phone": "+1 (555) 111-2222",
+      "email": "barry@ccpd.gov",
+      "medication_name": "Methylphenidate 20mg (ADHD)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-20",
+      "reminder_channel": "WhatsApp",
+      "status": "pending",
+      "created_at": "2026-05-15T14:36:53.842Z"
+    },
+    {
+      "id": "patient-8",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Selina Kyle",
+      "phone": "+1 (555) 969-6969",
+      "email": "selina@gothamcats.org",
+      "medication_name": "Gabapentin 300mg (Nerve Pain)",
+      "refill_frequency_days": 60,
+      "next_refill_date": "2026-07-01",
+      "reminder_channel": "SMS",
+      "status": "confirmed",
+      "created_at": "2026-05-09T14:36:53.842Z"
+    },
+    {
+      "id": "patient-9",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Steve Rogers",
+      "phone": "+1 (555) 194-1194",
+      "email": "cap@shield.org",
+      "medication_name": "Sildenafil 20mg (Cardiovascular)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-16",
+      "reminder_channel": "Email",
+      "status": "overdue",
+      "created_at": "2026-05-07T14:36:53.842Z"
+    },
+    {
+      "id": "patient-10",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "name": "Arthur Curry",
+      "phone": "+1 (555) 007-0007",
+      "email": "aquaman@atlantis.gov",
+      "medication_name": "Omega-3 Acid Ethyl Esters (Heart Health)",
+      "refill_frequency_days": 30,
+      "next_refill_date": "2026-05-19",
+      "reminder_channel": "WhatsApp",
+      "status": "pending",
+      "created_at": "2026-04-19T14:36:53.842Z"
+    }
+  ],
+  "reminders": [
+    {
+      "id": "reminder-1",
+      "patient_id": "patient-1",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-02T14:36:53.842Z",
+      "channel": "WhatsApp",
+      "response": "YES",
+      "status": "confirmed",
+      "message_body": "Hi Sarah Connor, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Lisinopril 10mg (Blood Pressure) is due for a refill. Reply YES to confirm.",
+      "created_at": "2026-05-02T14:36:53.842Z"
+    },
+    {
+      "id": "reminder-2",
+      "patient_id": "patient-2",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-17T02:36:53.842Z",
+      "channel": "SMS",
+      "response": null,
+      "status": "sent",
+      "message_body": "Hi Bruce Wayne, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Atorvastatin 20mg (Cholesterol) is due for a refill. Reply YES to confirm.",
+      "created_at": "2026-05-17T02:36:53.842Z"
+    },
+    {
+      "id": "reminder-3",
+      "patient_id": "patient-3",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-12T14:36:53.842Z",
+      "channel": "WhatsApp",
+      "response": null,
+      "status": "failed",
+      "message_body": "Hi Peter Parker, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Albuterol Inhaler (Asthma) is due for a refill. Reply YES to confirm.",
+      "created_at": "2026-05-12T14:36:53.842Z"
+    },
+    {
+      "id": "reminder-4",
+      "patient_id": "patient-5",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-12T14:36:53.842Z",
+      "channel": "WhatsApp",
+      "response": "CONFIRM",
+      "status": "confirmed",
+      "message_body": "Hi Diana Prince, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Metformin 500mg (Diabetes) is due for a refill. Reply YES to confirm.",
+      "created_at": "2026-05-12T14:36:53.842Z"
+    },
+    {
+      "id": "reminder-5",
+      "patient_id": "patient-8",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-02T14:36:53.842Z",
+      "channel": "SMS",
+      "response": "YES",
+      "status": "confirmed",
+      "message_body": "Hi Selina Kyle, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Gabapentin 300mg (Nerve Pain) is due for a refill. Reply YES to confirm.",
+      "created_at": "2026-05-02T14:36:53.842Z"
+    },
+    {
+      "patient_id": "patient-7",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-17T14:37:49.116Z",
+      "channel": "WhatsApp",
+      "response": null,
+      "status": "sent",
+      "message_body": "Hi Barry Allen, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Methylphenidate 20mg (ADHD) is due for a refill on 2026-05-20. Reply YES to confirm.",
+      "id": "reminder-8nzw10lmc",
+      "created_at": "2026-05-17T14:37:49.116Z"
+    },
+    {
+      "patient_id": "patient-4",
+      "clinic_id": "demo-clinic-uuid-12345",
+      "sent_at": "2026-05-17T14:37:49.117Z",
+      "channel": "Email",
+      "response": null,
+      "status": "sent",
+      "message_body": "Hi Clark Kent, this is a friendly reminder from RxRemind Premium Medical Clinic that your prescription for Levothyroxine 50mcg (Thyroid) is due for a refill on 2026-05-20. Reply YES to confirm.",
+      "id": "reminder-5eh5czub5",
+      "created_at": "2026-05-17T14:37:49.117Z"
+    }
+  ]
+}
