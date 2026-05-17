@@ -2,6 +2,11 @@
   "name": "rx-remind-temp",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "@opennextjs/cloudflare": {
+      "next": "$next"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
