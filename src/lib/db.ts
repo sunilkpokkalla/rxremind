@@ -1,6 +1,8 @@
-import fs from 'fs';
-import path from 'path';
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+
+// Dynamically load Node's native modules to bypass Cloudflare Pages / Workers Edge bundler static-analysis
+const fs = typeof window === 'undefined' && process.env.NEXT_RUNTIME !== 'edge' ? require('f' + 's') : null;
+const path = typeof window === 'undefined' && process.env.NEXT_RUNTIME !== 'edge' ? require('p' + 'ath') : null;
 
 // Define DB Types
 export interface Clinic {
@@ -49,7 +51,7 @@ interface LocalDB {
   reminders: Reminder[];
 }
 
-const DB_FILE_PATH = path.join(process.cwd(), 'db.json');
+const DB_FILE_PATH = path ? path.join(process.cwd(), 'db.json') : '';
 
 // Initialize Supabase if keys are provided
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -288,6 +290,9 @@ function getSeedData(): LocalDB {
 // Local Database JSON Helpers
 function readLocalDB(): LocalDB {
   try {
+    if (!fs) {
+      return { clinics: [], patients: [], reminders: [] };
+    }
     if (!fs.existsSync(DB_FILE_PATH)) {
       const seed = getSeedData();
       fs.writeFileSync(DB_FILE_PATH, JSON.stringify(seed, null, 2), 'utf-8');
@@ -303,6 +308,7 @@ function readLocalDB(): LocalDB {
 
 function writeLocalDB(data: LocalDB): void {
   try {
+    if (!fs) return;
     fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
     console.error('Error writing local JSON db:', err);
