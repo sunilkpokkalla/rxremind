@@ -53,8 +53,9 @@ const DB_FILE_PATH = path.join(process.cwd(), 'db.json');
 
 // Initialize Supabase if keys are provided
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || '';
 const isSupabaseEnabled = supabaseUrl !== '' && supabaseAnonKey !== '';
+
 
 let supabaseClient: SupabaseClient | null = null;
 if (isSupabaseEnabled) {
