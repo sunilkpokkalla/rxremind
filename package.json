@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
     "start": "next start",
     "lint": "next lint",
     "build:worker": "opennextjs-cloudflare build",
