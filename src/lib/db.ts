@@ -638,6 +638,14 @@ export class DBBroker {
             message_body: msg
           });
 
+          // Send physical Twilio SMS
+          try {
+            const { sendTwilioSMS } = require('./twilio');
+            await sendTwilioSMS(patient.phone, msg);
+          } catch (twilioErr) {
+            console.error('Automated Twilio scan dispatch failed:', twilioErr);
+          }
+
           // Mark patient status as pending (since reminder was sent and is awaiting reply)
           await this.updatePatient(patient.id, { status: 'pending' });
           sent++;

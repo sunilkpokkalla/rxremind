@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DBBroker } from '@/lib/db';
+import { sendTwilioSMS } from '@/lib/twilio';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,7 +52,14 @@ export async function POST(request: Request) {
       message_body: msg
     });
 
-    // 5. Shift patient status to pending
+    // 5. Fire physical Twilio SMS dispatch
+    try {
+      await sendTwilioSMS(patient.phone, msg);
+    } catch (twilioErr) {
+      console.error('Physical Twilio message dispatch failed:', twilioErr);
+    }
+
+    // 6. Shift patient status to pending
     await DBBroker.updatePatient(patient.id, { status: 'pending' });
 
     return NextResponse.json({
