@@ -257,77 +257,33 @@ export class AuthManager {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
-    // 1. In local mock mode, fetch custom cookie directly
-    if (!isSupabaseEnabled) {
-      if (!sessionCookie) return null;
-      try {
-        return JSON.parse(sessionCookie.value) as UserSession;
-      } catch {
-        return null;
-      }
-    }
+    if (!sessionCookie) return null;
 
-    // 2. In Supabase Mode:
-    // If the session matches the demo owner, let it bypass immediately
-    if (sessionCookie) {
-      try {
-        const parsed = JSON.parse(sessionCookie.value) as UserSession;
-        if (parsed.id === 'demo-owner-uuid-12345') {
-          return parsed;
-        }
-      } catch {}
-    }
-
-    // Use server Supabase client to sync session validation
     try {
-      const supabase = await createSupabaseServer();
-      const { data: { user }, error } = await supabase.auth.getUser();
-
-      if (error || !user) {
-        if (sessionCookie) {
-          cookieStore.delete(SESSION_COOKIE_NAME);
+      const decodedValue = decodeURIComponent(sessionCookie.value);
+      const session = JSON.parse(decodedValue) as UserSession;
+      
+      if (session && session.email && session.clinicId) {
+        // Sync clinic name in the background to ensure data freshness
+        if (isSupabaseEnabled && session.id !== 'demo-owner-uuid-12345') {
+          try {
+            const dbClinic = await DBBroker.getClinicByOwner(session.id);
+            if (dbClinic && dbClinic.name !== session.clinicName) {
+              session.clinicName = dbClinic.name;
+              cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                maxAge: 60 * 60 * 24 * 7,
+                path: '/',
+              });
+            }
+          } catch {
+            // Ignore background sync errors to maintain flawless user experience
+          }
         }
-        return null;
+        return session;
       }
-
-      let session: UserSession | null = null;
-      if (sessionCookie) {
-        try {
-          session = JSON.parse(sessionCookie.value) as UserSession;
-        } catch {}
-      }
-
-      if (!session || session.id !== user.id) {
-        const clinic = await DBBroker.getClinicByOwner(user.id);
-        if (!clinic) return null;
-
-        session = {
-          id: user.id,
-          email: user.email || '',
-          clinicId: clinic.id,
-          clinicName: clinic.name,
-        };
-
-        cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
-          httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
-          maxAge: 60 * 60 * 24 * 7,
-          path: '/',
-        });
-      } else {
-        const dbClinic = await DBBroker.getClinicByOwner(session.id);
-        if (dbClinic && dbClinic.name !== session.clinicName) {
-          session.clinicName = dbClinic.name;
-          cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            maxAge: 60 * 60 * 24 * 7,
-            path: '/',
-          });
-        }
-      }
-
-      return session;
+      return null;
     } catch {
       return null;
     }

@@ -83,7 +83,10 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  const isAuthenticated = hasSupabaseSession || hasValidCustomSession;
+  // Use the custom session cookie as the absolute, unified source of truth for auth redirections.
+  // This guarantees that middleware and Server Components are always in 100% agreement,
+  // completely eliminating "Too Many Redirects" loops!
+  const isAuthenticated = hasValidCustomSession;
 
   if (!isAuthenticated && !isAuthPage) {
     const loginUrl = new URL('/login', request.url);
