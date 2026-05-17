@@ -350,7 +350,7 @@ export class DBBroker {
   static async createClinic(clinic: Omit<Clinic, 'id' | 'created_at'>): Promise<Clinic> {
     const newClinic: Clinic = {
       ...clinic,
-      id: isSupabaseEnabled ? undefined as any : `clinic-${Math.random().toString(36).substr(2, 9)}`,
+      id: `clinic-${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString()
     };
 
@@ -448,7 +448,7 @@ export class DBBroker {
   static async createPatient(patient: Omit<Patient, 'id' | 'created_at'>): Promise<Patient> {
     const newPatient: Patient = {
       ...patient,
-      id: isSupabaseEnabled ? undefined as any : `patient-${Math.random().toString(36).substr(2, 9)}`,
+      id: `patient-${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString()
     };
 
@@ -529,7 +529,7 @@ export class DBBroker {
   static async createReminder(reminder: Omit<Reminder, 'id' | 'created_at'>): Promise<Reminder> {
     const newReminder: Reminder = {
       ...reminder,
-      id: isSupabaseEnabled ? undefined as any : `reminder-${Math.random().toString(36).substr(2, 9)}`,
+      id: `reminder-${Math.random().toString(36).substring(2, 9)}`,
       created_at: new Date().toISOString()
     };
 

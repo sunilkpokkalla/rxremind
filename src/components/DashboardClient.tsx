@@ -284,7 +284,7 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
             </div>
 
             <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-              When a patient responds <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">"YES"</code> or <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">"CONFIRM"</code> to our WhatsApp/SMS reminder, their status updates to <span className="text-emerald-600 font-bold">Confirmed</span> and their next refill calendar is automatically bumped forward by their refill frequency. Use the simulator below to play with this!
+              When a patient responds <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">&quot;YES&quot;</code> or <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">&quot;CONFIRM&quot;</code> to our WhatsApp/SMS reminder, their status updates to <span className="text-emerald-600 font-bold">Confirmed</span> and their next refill calendar is automatically bumped forward by their refill frequency. Use the simulator below to play with this!
             </p>
 
             {pendingPatients.length === 0 ? (
@@ -350,7 +350,7 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
                       disabled={isPending}
                       className="px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold border border-emerald-200/50 transition"
                     >
-                      Simulate "YES" (Auto-Confirm & Reschedule!)
+                      Simulate &quot;YES&quot; (Auto-Confirm & Reschedule!)
                     </button>
                     <button
                       onClick={() => {
@@ -410,7 +410,7 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
                       {log.response ? (
                         <div className="mt-1 bg-slate-50 rounded-xl p-2 border border-slate-100">
                           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Patient replied:</p>
-                          <p className="text-xs text-slate-700 font-medium italic mt-0.5">"{log.response}"</p>
+                          <p className="text-xs text-slate-700 font-medium italic mt-0.5">&quot;{log.response}&quot;</p>
                         </div>
                       ) : (
                         <p className="text-[11px] text-slate-500 mt-1 leading-normal truncate">{log.message_body}</p>

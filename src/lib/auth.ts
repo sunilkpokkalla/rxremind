@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
-import { DBBroker, Clinic } from './db';
+import { DBBroker } from './db';
 
 export interface UserSession {
   id: string;

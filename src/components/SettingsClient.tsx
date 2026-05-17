@@ -4,15 +4,12 @@ import React, { useState, useRef, useTransition } from 'react';
 import { useFormState } from 'react-dom';
 import { updateSettingsAction } from '@/app/actions';
 import { 
-  Settings, 
   Building2, 
-  Phone, 
   MessageSquare, 
   Sliders, 
   Sparkles, 
   Eye, 
   Info,
-  Check,
   CheckCheck
 } from 'lucide-react';
 import { Clinic } from '@/lib/db';
@@ -24,7 +21,7 @@ interface SettingsClientProps {
 export default function SettingsClient({ clinic }: SettingsClientProps) {
   const updateSettingsWithId = updateSettingsAction.bind(null, clinic.id);
   const [state, formAction] = useFormState(updateSettingsWithId, null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending] = useTransition();
 
   // Local states for live preview
   const [clinicName, setClinicName] = useState(clinic.name);
@@ -73,9 +70,7 @@ export default function SettingsClient({ clinic }: SettingsClientProps) {
     return preview;
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    setSuccessMsg(null);
-  };
+  // Reset success message on form submit
 
   // Intercept action completion state
   React.useEffect(() => {
@@ -118,7 +113,7 @@ export default function SettingsClient({ clinic }: SettingsClientProps) {
         <div className="lg:col-span-3 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 sm:p-8">
           <form 
             action={formAction}
-            onSubmit={handleFormSubmit}
+            onSubmit={() => setSuccessMsg(null)}
             className="space-y-6"
           >
             {state?.error && (
@@ -216,7 +211,7 @@ export default function SettingsClient({ clinic }: SettingsClientProps) {
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-normal">
-                  How many days before the patient's next scheduled refill date should the system fire the reminder?
+                  How many days before the patient&apos;s next scheduled refill date should the system fire the reminder?
                 </p>
                 <div className="flex items-center space-x-4 pt-2">
                   <input
