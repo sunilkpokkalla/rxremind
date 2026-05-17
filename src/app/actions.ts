@@ -13,8 +13,20 @@ async function verifyTurnstileToken(token: string | null, email?: string): Promi
     return { success: true };
   }
 
+  // Detect if we are running on the live production domain
+  const headersList = await headers();
+  const host = headersList.get('host') || '';
+  const isProduction = host === 'rxremind.us' || host.endsWith('rxremind.us');
+
+  // If we are NOT on the production domain (e.g. localhost, wrangler preview, *.workers.dev, *.pages.dev)
+  // we gracefully bypass captcha validation to support frictionless testing and domain previewing!
+  if (!isProduction) {
+    console.log(`Non-production host detected (${host}). Gracefully bypassing Turnstile CAPTCHA.`);
+    return { success: true };
+  }
+
   const secretKey = process.env.TURNSTILE_SECRET_KEY;
-  // If the secret key is not configured in the environment, fallback gracefully (e.g., local developer environment)
+  // If the secret key is not configured in the environment, fallback gracefully
   if (!secretKey) {
     return { success: true };
   }
