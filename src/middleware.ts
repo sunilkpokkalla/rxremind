@@ -57,11 +57,24 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Fallback check for custom session cookie (especially for mock demo owner)
+  // 2. Fallback check for custom session cookie (supports both mock users and active sessions)
   const customSession = request.cookies.get('rxremind_session');
-  let isDemoSession = false;
+  let hasValidCustomSession = false;
   if (customSession?.value) {
-    isDemoSession = customSession.value.includes('demo-owner-uuid-12345');
+    try {
+      // Safely decode cookie if JSON-encoded
+      const decodedValue = decodeURIComponent(customSession.value);
+      const sessionObj = JSON.parse(decodedValue);
+      if (sessionObj && sessionObj.email && sessionObj.clinicId) {
+        hasValidCustomSession = true;
+      }
+    } catch {
+      // Fallback string validation in case of unencoded formats
+      hasValidCustomSession = 
+        customSession.value.includes('clinicId') || 
+        customSession.value.includes('demo-clinic-uuid-12345') ||
+        customSession.value.includes('@');
+    }
   }
 
   const isAuthPage =
@@ -70,7 +83,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  const isAuthenticated = hasSupabaseSession || isDemoSession;
+  const isAuthenticated = hasSupabaseSession || hasValidCustomSession;
 
   if (!isAuthenticated && !isAuthPage) {
     const loginUrl = new URL('/login', request.url);
