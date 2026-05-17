@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
 import { updatePatientAction } from '@/app/actions';
 import { 
   User, 
@@ -22,7 +21,7 @@ interface EditPatientClientProps {
 export default function EditPatientClient({ patient }: EditPatientClientProps) {
   // Bind the patient ID to the Server Action so it knows which record to update
   const updateActionWithId = updatePatientAction.bind(null, patient.id);
-  const [state, formAction] = useFormState(updateActionWithId, null);
+  const [state, formAction] = useActionState(updateActionWithId, null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFormSubmit = () => {

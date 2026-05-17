@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useTransition } from 'react';
-import { useFormState } from 'react-dom';
+import React, { useState, useRef, useTransition, useActionState } from 'react';
 import { updateSettingsAction } from '@/app/actions';
 import { 
   Building2, 
@@ -20,7 +19,7 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ clinic }: SettingsClientProps) {
   const updateSettingsWithId = updateSettingsAction.bind(null, clinic.id);
-  const [state, formAction] = useFormState(updateSettingsWithId, null);
+  const [state, formAction] = useActionState(updateSettingsWithId, null);
   const [isPending] = useTransition();
 
   // Local states for live preview

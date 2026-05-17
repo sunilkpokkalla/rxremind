@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
 import { signInAction } from '@/app/actions';
 import { 
   ActivitySquare, 
@@ -16,7 +15,7 @@ import {
 } from 'lucide-react';
 
 export default function LoginPage() {
-  const [state, formAction] = useFormState(signInAction, null);
+  const [state, formAction] = useActionState(signInAction, null);
   const [emailInput, setEmailInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);

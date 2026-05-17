@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
 import { signUpAction } from '@/app/actions';
 import { 
   ActivitySquare, 
@@ -17,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export default function SignupPage() {
-  const [state, formAction] = useFormState(signUpAction, null);
+  const [state, formAction] = useActionState(signUpAction, null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFormSubmit = () => {

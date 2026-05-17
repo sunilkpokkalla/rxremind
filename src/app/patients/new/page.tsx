@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useActionState } from 'react';
 import Link from 'next/link';
-import { useFormState } from 'react-dom';
 import { createPatientAction } from '@/app/actions';
 import { 
   UserPlus, 
@@ -19,7 +18,7 @@ import {
 
 
 export default function NewPatientPage() {
-  const [state, formAction] = useFormState(createPatientAction, null);
+  const [state, formAction] = useActionState(createPatientAction, null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFormSubmit = () => {
