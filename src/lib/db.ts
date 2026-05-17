@@ -315,6 +315,12 @@ function writeLocalDB(data: LocalDB): void {
   }
 }
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export function isValidUUID(uuid: string | null | undefined): boolean {
+  if (!uuid) return false;
+  return UUID_REGEX.test(uuid);
+}
+
 // Global Database Controller Class
 export class DBBroker {
   static getMode(): 'supabase' | 'json' {
@@ -337,6 +343,7 @@ export class DBBroker {
 
   static async getClinicByOwner(ownerId: string): Promise<Clinic | null> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(ownerId)) return null;
       const { data, error } = await supabaseClient
         .from('clinics')
         .select('*')
@@ -353,6 +360,7 @@ export class DBBroker {
 
   static async getClinicById(id: string): Promise<Clinic | null> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(id)) return null;
       const { data, error } = await supabaseClient
         .from('clinics')
         .select('*')
@@ -392,6 +400,7 @@ export class DBBroker {
 
   static async updateClinic(id: string, updates: Partial<Clinic>): Promise<Clinic> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(id)) throw new Error('Invalid UUID');
       const { data, error } = await supabaseClient
         .from('clinics')
         .update(updates)
@@ -413,6 +422,7 @@ export class DBBroker {
   // PATIENTS API
   static async getPatients(clinicId: string): Promise<Patient[]> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(clinicId)) return [];
       const { data, error } = await supabaseClient
         .from('patients')
         .select('*')
@@ -451,6 +461,7 @@ export class DBBroker {
 
   static async getPatientById(id: string): Promise<Patient | null> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(id)) return null;
       const { data, error } = await supabaseClient
         .from('patients')
         .select('*')
@@ -490,6 +501,7 @@ export class DBBroker {
 
   static async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(id)) throw new Error('Invalid UUID');
       const { data, error } = await supabaseClient
         .from('patients')
         .update(updates)
@@ -511,6 +523,7 @@ export class DBBroker {
 
   static async deletePatient(id: string): Promise<boolean> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(id)) return false;
       const { error } = await supabaseClient
         .from('patients')
         .delete()
@@ -531,6 +544,7 @@ export class DBBroker {
   // REMINDERS API
   static async getReminders(clinicId: string): Promise<Reminder[]> {
     if (isSupabaseEnabled && supabaseClient) {
+      if (!isValidUUID(clinicId)) return [];
       const { data, error } = await supabaseClient
         .from('reminders')
         .select('*')

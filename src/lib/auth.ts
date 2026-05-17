@@ -204,12 +204,22 @@ export class AuthManager {
     try {
       const session = JSON.parse(sessionCookie.value) as UserSession;
       
+      // If Supabase is enabled, ensure session ID is a valid UUID
+      if (isSupabaseEnabled) {
+        const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (!UUID_REGEX.test(session.id)) {
+          // Self-heal and destroy legacy mock cookies instantly
+          cookieStore.delete(SESSION_COOKIE_NAME);
+          return null;
+        }
+      }
+      
       // Keep clinic name in session synced with DB updates
       const dbClinic = await DBBroker.getClinicByOwner(session.id);
       if (dbClinic && dbClinic.name !== session.clinicName) {
         session.clinicName = dbClinic.name;
         // Update cookie
-        (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+        cookieStore.set(SESSION_COOKIE_NAME, JSON.stringify(session), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 60 * 60 * 24 * 7,

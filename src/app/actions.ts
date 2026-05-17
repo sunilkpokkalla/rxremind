@@ -138,10 +138,14 @@ export async function upgradePlanAction(clinicId: string, selectedPlan: 'Starter
 // CREATE PATIENT ACTION
 export async function createPatientAction(prevState: any, formData: FormData) {
   const session = await AuthManager.getCurrentUser();
-  if (!session) throw new Error('Unauthenticated');
+  if (!session) {
+    return { success: false, error: 'You must be logged in to create patients' };
+  }
 
   const clinic = await DBBroker.getClinicByOwner(session.id);
-  if (!clinic) throw new Error('Clinic not found');
+  if (!clinic) {
+    return { success: false, error: 'Your clinic account could not be found. Please try logging out and logging back in.' };
+  }
 
   const name = formData.get('name') as string;
   const phone = formData.get('phone') as string;
