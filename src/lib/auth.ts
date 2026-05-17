@@ -55,7 +55,7 @@ export class AuthManager {
       };
 
       // Set cookie for Next.js routing convenience
-      cookies().set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+      (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -102,7 +102,7 @@ export class AuthManager {
         };
       }
 
-      cookies().set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+      (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 7, // 1 week
@@ -144,7 +144,7 @@ export class AuthManager {
         clinicName: clinic.name,
       };
 
-      cookies().set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+      (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 7,
@@ -174,7 +174,7 @@ export class AuthManager {
         clinicName: clinic.name,
       };
 
-      cookies().set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+      (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         maxAge: 60 * 60 * 24 * 7,
@@ -191,13 +191,13 @@ export class AuthManager {
       const supabase = createClient(supabaseUrl, supabaseAnonKey);
       await supabase.auth.signOut();
     }
-    cookies().delete(SESSION_COOKIE_NAME);
+    (await cookies()).delete(SESSION_COOKIE_NAME);
     return true;
   }
 
   // GET CURRENT SESSION / USER
   static async getCurrentUser(): Promise<UserSession | null> {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
     if (!sessionCookie) return null;
 
@@ -209,7 +209,7 @@ export class AuthManager {
       if (dbClinic && dbClinic.name !== session.clinicName) {
         session.clinicName = dbClinic.name;
         // Update cookie
-        cookies().set(SESSION_COOKIE_NAME, JSON.stringify(session), {
+        (await cookies()).set(SESSION_COOKIE_NAME, JSON.stringify(session), {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           maxAge: 60 * 60 * 24 * 7,

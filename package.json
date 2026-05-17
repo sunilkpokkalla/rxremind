@@ -12,28 +12,28 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:worker": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion",
-    "deploy": "opennextjs-cloudflare build --dangerouslyUseUnsupportedNextVersion && wrangler deploy"
+    "build:worker": "opennextjs-cloudflare build",
+    "deploy": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4",
     "cookie": "^1.1.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.16.0",
-    "next": "14.2.35",
-    "react": "^18",
-    "react-dom": "^18"
+    "next": "^15.5.18",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.10",
-    "picomatch": "2.3.2",
     "@types/cookie": "^0.6.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20",
-    "@types/react": "^18",
-    "@types/react-dom": "^18",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "^15.5.18",
+    "picomatch": "2.3.2",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5",
