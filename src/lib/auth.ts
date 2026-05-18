@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { DBBroker } from './db';
 import { createSupabaseServer } from './supabaseServer';
 
@@ -135,9 +135,24 @@ export class AuthManager {
   static async signUp(email: string, password?: string, clinicName?: string, clinicPhone?: string): Promise<{ success: boolean; error?: string; session?: UserSession }> {
     if (isSupabaseEnabled) {
       const supabase = await createSupabaseServer();
+
+      // Dynamically determine current environment host to redirect verified users correctly
+      let redirectTo = 'https://rxremind.us/api/auth/callback';
+      try {
+        const headersList = await headers();
+        const host = headersList.get('host') || '';
+        const protocol = host.includes('localhost') ? 'http' : 'https';
+        redirectTo = `${protocol}://${host}/api/auth/callback`;
+      } catch {
+        // ignore
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password: password || 'password',
+        options: {
+          emailRedirectTo: redirectTo,
+        }
       });
       if (error) return { success: false, error: error.message };
       if (!data.user) return { success: false, error: 'Registration failed' };
