@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { 
   CreditCard, 
   Check, 
@@ -17,12 +16,10 @@ import { upgradePlanAction } from '@/app/actions';
 
 interface BillingClientProps {
   clinic: Clinic;
+  showSuccessBanner?: boolean;
 }
 
-export default function BillingClient({ clinic }: BillingClientProps) {
-  const searchParams = useSearchParams();
-  const showSuccessBanner = searchParams.get('success') === 'true';
-
+export default function BillingClient({ clinic, showSuccessBanner = false }: BillingClientProps) {
   const [isPending, startTransition] = useTransition();
   const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Growth' | 'Pro' | null>(null);
   const [checkoutStep, setCheckoutStep] = useState(0);
