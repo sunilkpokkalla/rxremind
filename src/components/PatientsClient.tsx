@@ -72,8 +72,8 @@ export default function PatientsClient({ patients }: PatientsClientProps) {
       try {
         await sendSingleReminderAction(id);
         setStatusMessage({ text: `Manual reminder successfully sent to ${name}!`, type: 'success' });
-      } catch (err) {
-        setStatusMessage({ text: `Failed to notify ${name}.`, type: 'error' });
+      } catch (err: any) {
+        setStatusMessage({ text: `Failed to notify ${name}: ${err.message || 'Unknown error'}`, type: 'error' });
       }
     });
   };

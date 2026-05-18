@@ -199,13 +199,20 @@ export async function sendSingleReminderAction(patientId: string) {
           </div>
         </div>
       `;
-      await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+      const dispatchResult = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+      if (!dispatchResult.success) {
+        throw new Error(dispatchResult.error || 'Resend rejected the email dispatch request.');
+      }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
-      await sendTwilioSMS(patient.phone, msg);
+      const dispatchResult = await sendTwilioSMS(patient.phone, msg);
+      if (!dispatchResult.success) {
+        throw new Error(dispatchResult.error || 'Twilio rejected the SMS request.');
+      }
     }
-  } catch (dispatchErr) {
+  } catch (dispatchErr: any) {
     console.error('Manual physical reminder dispatch failed:', dispatchErr);
+    throw new Error(`Physical transmission failed: ${dispatchErr.message || dispatchErr}`);
   }
 
   await DBBroker.updatePatient(patient.id, { status: 'pending' });
