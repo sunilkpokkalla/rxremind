@@ -12,12 +12,18 @@ export default async function PatientsPage() {
     redirect('/login');
   }
 
-  const clinic = await DBBroker.getClinicByOwner(session.id);
-  if (!clinic) {
-    redirect('/');
+  let clinic;
+  let patients = [];
+  try {
+    clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      redirect('/');
+    }
+    patients = await DBBroker.getPatients(clinic.id);
+  } catch (err) {
+    console.error('Patients page database access denied:', err);
+    redirect('/login?error=database_access_denied');
   }
-
-  const patients = await DBBroker.getPatients(clinic.id);
 
   return <PatientsClient patients={patients} />;
 }

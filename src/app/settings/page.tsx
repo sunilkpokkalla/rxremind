@@ -12,9 +12,15 @@ export default async function SettingsPage() {
     redirect('/login');
   }
 
-  const clinic = await DBBroker.getClinicByOwner(session.id);
-  if (!clinic) {
-    redirect('/');
+  let clinic;
+  try {
+    clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      redirect('/');
+    }
+  } catch (err) {
+    console.error('Settings page database access denied:', err);
+    redirect('/login?error=database_access_denied');
   }
 
   return <SettingsClient clinic={clinic} />;

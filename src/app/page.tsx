@@ -13,26 +13,35 @@ export default async function DashboardPage() {
   }
 
   // Load clinic and verify context
-  let clinic = await DBBroker.getClinicByOwner(session.id);
-  
-  if (!clinic) {
-    // Failsafe clinic creation
-    clinic = await DBBroker.createClinic({
-      owner_id: session.id,
-      name: session.clinicName || 'RxRemind Clinic',
-      email: session.email,
-      phone: '',
-      logo_url: '',
-      plan: 'Starter',
-      reminder_days_before: 3,
-      auto_reminders: true,
-      reminder_template: 'Hi {{patient_name}}, this is a friendly reminder from {{clinic_name}} that your prescription for {{medication_name}} is due for a refill on {{refill_date}}. Reply YES to confirm.',
-    });
-  }
+  let clinic;
+  let patients = [];
+  let reminders = [];
 
-  // Load all patients and reminders
-  const patients = await DBBroker.getPatients(clinic.id);
-  const reminders = await DBBroker.getReminders(clinic.id);
+  try {
+    clinic = await DBBroker.getClinicByOwner(session.id);
+    
+    if (!clinic) {
+      // Failsafe clinic creation
+      clinic = await DBBroker.createClinic({
+        owner_id: session.id,
+        name: session.clinicName || 'RxRemind Clinic',
+        email: session.email,
+        phone: '',
+        logo_url: '',
+        plan: 'Starter',
+        reminder_days_before: 3,
+        auto_reminders: true,
+        reminder_template: 'Hi {{patient_name}}, this is a friendly reminder from {{clinic_name}} that your prescription for {{medication_name}} is due for a refill on {{refill_date}}. Reply YES to confirm.',
+      });
+    }
+
+    // Load all patients and reminders
+    patients = await DBBroker.getPatients(clinic.id);
+    reminders = await DBBroker.getReminders(clinic.id);
+  } catch (err) {
+    console.error('Database access denied (possibly unconfirmed email or RLS issue):', err);
+    redirect('/login?error=database_access_denied');
+  }
 
   return (
     <DashboardClient 

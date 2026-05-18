@@ -13,7 +13,8 @@ import {
   Sparkles, 
   BadgeCheck, 
   MessageSquare,
-  Clock
+  Clock,
+  AlertTriangle
 } from 'lucide-react';
 
 function LoginForm() {
@@ -79,6 +80,22 @@ function LoginForm() {
             <div className="mt-6 p-4 bg-emerald-50 border border-emerald-500/10 text-emerald-800 text-sm font-medium rounded-xl space-y-1 animate-fade-in">
               <p className="font-bold">Password Updated!</p>
               <p className="text-slate-600">Your password was successfully reset. Please log in below with your new password.</p>
+            </div>
+          )}
+
+          {/* Database Access Denied (Unconfirmed Email) Warning Alert */}
+          {searchParams.get('error') === 'database_access_denied' && (
+            <div className="mt-6 p-4 bg-amber-50 border border-amber-500/20 text-amber-900 text-sm font-medium rounded-xl space-y-1 animate-fade-in shadow-sm">
+              <p className="font-bold flex items-center text-amber-800">
+                <AlertTriangle className="h-4 w-4 mr-1.5 text-amber-600" />
+                Database Access Blocked (Confirm Email)
+              </p>
+              <p className="text-slate-600 text-xs leading-normal">
+                Your email has been registered, but it has not been confirmed yet. Please check your inbox for a verification email from Supabase and click the link to confirm your account.
+              </p>
+              <p className="text-slate-600 text-xs leading-normal mt-1 border-t border-amber-500/10 pt-1">
+                <span className="font-bold text-amber-800">Note for Developers:</span> You can disable Email Confirmation inside the Supabase Dashboard under <span className="font-mono bg-amber-100/50 px-1 py-0.5 rounded">Authentication -&gt; Providers -&gt; Email</span> to allow users to register and log in instantly without verification!
+              </p>
             </div>
           )}
 

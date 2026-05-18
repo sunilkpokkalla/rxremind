@@ -16,9 +16,15 @@ export default async function BillingPage({ searchParams }: PageProps) {
     redirect('/login');
   }
 
-  const clinic = await DBBroker.getClinicByOwner(session.id);
-  if (!clinic) {
-    redirect('/');
+  let clinic;
+  try {
+    clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      redirect('/');
+    }
+  } catch (err) {
+    console.error('Billing page database access denied:', err);
+    redirect('/login?error=database_access_denied');
   }
 
   const resolvedParams = await searchParams;

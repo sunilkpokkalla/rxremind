@@ -12,14 +12,21 @@ export default async function RemindersPage() {
     redirect('/login');
   }
 
-  const clinic = await DBBroker.getClinicByOwner(session.id);
-  if (!clinic) {
-    redirect('/');
+  let clinic;
+  let reminders = [];
+  let patients = [];
+  try {
+    clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      redirect('/');
+    }
+    // Load all reminders and patient registry
+    reminders = await DBBroker.getReminders(clinic.id);
+    patients = await DBBroker.getPatients(clinic.id);
+  } catch (err) {
+    console.error('Reminders page database access denied:', err);
+    redirect('/login?error=database_access_denied');
   }
-
-  // Load all reminders and patient registry
-  const reminders = await DBBroker.getReminders(clinic.id);
-  const patients = await DBBroker.getPatients(clinic.id);
 
   return (
     <RemindersClient 
