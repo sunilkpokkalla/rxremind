@@ -11,6 +11,11 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
+  // Gracefully redirect /dashboard requests to the main root dashboard
+  if (pathname === '/dashboard') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
+
   // Let core API triggers bypass auth so cron jobs or webhook endpoints can function
   if (
     pathname.startsWith('/api/cron') ||
