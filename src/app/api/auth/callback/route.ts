@@ -23,7 +23,7 @@ export async function GET(request: Request) {
             email: user.email || '',
             phone: '',
             logo_url: '',
-            plan: 'Starter',
+            plan: 'Pro',
             reminder_days_before: 3,
             auto_reminders: true,
             reminder_template: 'Hi {{patient_name}}, this is a friendly reminder from {{clinic_name}} that your prescription for {{medication_name}} is due for a refill on {{refill_date}}. Reply YES to confirm.',
