@@ -84,13 +84,19 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  // Use the custom session cookie as the absolute, unified source of truth for auth redirections.
+  // Use active Supabase session as the absolute source of truth when enabled.
+  // Fall back to the custom session cookie ONLY when running in offline/mock mode.
   // This guarantees that middleware and Server Components are always in 100% agreement,
-  // completely eliminating "Too Many Redirects" loops!
-  const isAuthenticated = hasValidCustomSession;
+  // completely eliminating token desynchronization and database access exceptions!
+  const isAuthenticated = isSupabaseEnabled ? hasSupabaseSession : hasValidCustomSession;
 
   if (!isAuthenticated && !isAuthPage) {
     const loginUrl = new URL('/login', request.url);
+    // If we have a valid custom cookie session but no Supabase session, the token is stale/expired.
+    // Redirect with a database access denied flag to prompt email check or session re-login.
+    if (hasValidCustomSession && isSupabaseEnabled) {
+      loginUrl.searchParams.set('error', 'database_access_denied');
+    }
     return NextResponse.redirect(loginUrl);
   }
 

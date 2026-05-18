@@ -254,6 +254,28 @@ export class AuthManager {
 
   // GET CURRENT SESSION / USER
   static async getCurrentUser(): Promise<UserSession | null> {
+    if (isSupabaseEnabled) {
+      try {
+        const supabase = await createSupabaseServer();
+        const { data: { user }, error } = await supabase.auth.getUser();
+        
+        if (error || !user) return null;
+
+        // Fetch their clinic dynamically to guarantee absolute context accuracy
+        const clinic = await DBBroker.getClinicByOwner(user.id);
+        if (!clinic) return null;
+
+        return {
+          id: user.id,
+          email: user.email || '',
+          clinicId: clinic.id,
+          clinicName: clinic.name,
+        };
+      } catch {
+        return null;
+      }
+    }
+
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
