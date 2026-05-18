@@ -15,9 +15,20 @@ import { Clinic } from '@/lib/db';
 
 interface SettingsClientProps {
   clinic: Clinic;
+  gatewayStatus: {
+    resend: {
+      configured: boolean;
+      apiKeyMasked: string | null;
+    };
+    twilio: {
+      configured: boolean;
+      sidMasked: string | null;
+      phone: string | null;
+    };
+  };
 }
 
-export default function SettingsClient({ clinic }: SettingsClientProps) {
+export default function SettingsClient({ clinic, gatewayStatus }: SettingsClientProps) {
   const updateSettingsWithId = updateSettingsAction.bind(null, clinic.id);
   const [state, formAction] = useActionState(updateSettingsWithId, null);
   const [isPending] = useTransition();
@@ -295,9 +306,60 @@ export default function SettingsClient({ clinic }: SettingsClientProps) {
           </form>
         </div>
 
-        {/* Right 2 Columns: Smartphone Live WhatsApp Mock Simulator */}
-        <div className="lg:col-span-2 flex flex-col items-center justify-start lg:pt-8">
-          <div className="w-full max-w-sm bg-slate-900 border-[10px] border-slate-800 rounded-[40px] shadow-2xl overflow-hidden relative aspect-[9/18.5] flex flex-col">
+        {/* Right 2 Columns: Diagnostics + Smartphone Live WhatsApp Mock Simulator */}
+        <div className="lg:col-span-2 flex flex-col items-stretch justify-start space-y-6 lg:pt-8">
+          
+          {/* Diagnostics Card */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 pb-2 flex items-center">
+              <Sparkles className="mr-2 h-4.5 w-4.5 text-primary" />
+              Gateway Diagnostics
+            </h3>
+            
+            <div className="space-y-3">
+              {/* Resend Card */}
+              <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50 flex items-start space-x-3">
+                <div className={`mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0 ${gatewayStatus.resend.configured ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-800">Resend Email Gateway</span>
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${gatewayStatus.resend.configured ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {gatewayStatus.resend.configured ? 'Active' : 'Missing'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                    {gatewayStatus.resend.configured 
+                      ? `Connected successfully! Active API Key: ${gatewayStatus.resend.apiKeyMasked}`
+                      : '🔴 Patient emails will not send. To activate, add your RESEND_API_KEY to your wrangler.jsonc or Cloudflare Pages env settings!'
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* Twilio Card */}
+              <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50 flex items-start space-x-3">
+                <div className={`mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0 ${gatewayStatus.twilio.configured ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs font-bold text-slate-800">Twilio SMS / WhatsApp</span>
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${gatewayStatus.twilio.configured ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {gatewayStatus.twilio.configured ? 'Active' : 'Missing'}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                    {gatewayStatus.twilio.configured 
+                      ? `Connected successfully! Active SID: ${gatewayStatus.twilio.sidMasked} (From: ${gatewayStatus.twilio.phone})`
+                      : '🔴 SMS/WhatsApp will not send. To activate, add TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN to your wrangler.jsonc or Cloudflare Pages env settings!'
+                    }
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Smartphone Simulator */}
+          <div className="flex flex-col items-center">
+            <div className="w-full max-w-sm bg-slate-900 border-[10px] border-slate-800 rounded-[40px] shadow-2xl overflow-hidden relative aspect-[9/18.5] flex flex-col">
             
             {/* Phone Top Notch Speaker */}
             <div className="absolute top-0 inset-x-0 h-6 bg-slate-800 flex justify-center items-center z-20">
@@ -350,6 +412,7 @@ export default function SettingsClient({ clinic }: SettingsClientProps) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

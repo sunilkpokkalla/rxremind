@@ -23,5 +23,17 @@ export default async function SettingsPage() {
     redirect('/login?error=database_access_denied');
   }
 
-  return <SettingsClient clinic={clinic} />;
+  const gatewayStatus = {
+    resend: {
+      configured: !!process.env.RESEND_API_KEY,
+      apiKeyMasked: process.env.RESEND_API_KEY ? `re_***${process.env.RESEND_API_KEY.slice(-4)}` : null,
+    },
+    twilio: {
+      configured: !!process.env.TWILIO_ACCOUNT_SID && !!process.env.TWILIO_AUTH_TOKEN && !!process.env.TWILIO_PHONE_NUMBER,
+      sidMasked: process.env.TWILIO_ACCOUNT_SID ? `AC***${process.env.TWILIO_ACCOUNT_SID.slice(-4)}` : null,
+      phone: process.env.TWILIO_PHONE_NUMBER || null,
+    }
+  };
+
+  return <SettingsClient clinic={clinic} gatewayStatus={gatewayStatus} />;
 }
