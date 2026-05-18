@@ -84,11 +84,25 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  // Use active Supabase session as the absolute source of truth when enabled.
-  // Fall back to the custom session cookie ONLY when running in offline/mock mode.
-  // This guarantees that middleware and Server Components are always in 100% agreement,
-  // completely eliminating token desynchronization and database access exceptions!
-  const isAuthenticated = isSupabaseEnabled ? hasSupabaseSession : hasValidCustomSession;
+  // Gracefully bypass Supabase validation for the mock demo account to guarantee it works instantly
+  let isDemoSession = false;
+  if (customSession?.value) {
+    try {
+      const decodedValue = decodeURIComponent(customSession.value);
+      const sessionObj = JSON.parse(decodedValue);
+      if (sessionObj && sessionObj.email === 'owner@rxremind-demo.com') {
+        isDemoSession = true;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Use active Supabase session as the absolute source of truth when enabled,
+  // EXCEPT for the demo walkthrough session which is allowed to bypass Supabase.
+  const isAuthenticated = isDemoSession 
+    ? true 
+    : (isSupabaseEnabled ? hasSupabaseSession : hasValidCustomSession);
 
   if (!isAuthenticated && !isAuthPage) {
     const loginUrl = new URL('/login', request.url);

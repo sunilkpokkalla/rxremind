@@ -254,6 +254,22 @@ export class AuthManager {
 
   // GET CURRENT SESSION / USER
   static async getCurrentUser(): Promise<UserSession | null> {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
+
+    // Gracefully bypass Supabase validation for the mock demo account to allow instant walkthrough
+    if (sessionCookie) {
+      try {
+        const decodedValue = decodeURIComponent(sessionCookie.value);
+        const session = JSON.parse(decodedValue) as UserSession;
+        if (session && session.email === 'owner@rxremind-demo.com') {
+          return session;
+        }
+      } catch {
+        // ignore
+      }
+    }
+
     if (isSupabaseEnabled) {
       try {
         const supabase = await createSupabaseServer();
@@ -275,9 +291,6 @@ export class AuthManager {
         return null;
       }
     }
-
-    const cookieStore = await cookies();
-    const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
     if (!sessionCookie) return null;
 
