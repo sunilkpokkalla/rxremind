@@ -405,7 +405,10 @@ export class DBBroker {
     };
 
     if (isSupabaseEnabled) {
-      const supabase = await getSupabaseClient();
+      const { createSupabaseAdmin } = await import('./supabaseServer');
+      const adminClient = createSupabaseAdmin();
+      const supabase = adminClient || (await getSupabaseClient());
+
       const { data, error } = await supabase
         .from('clinics')
         .insert([clinic])
