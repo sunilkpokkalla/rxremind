@@ -1,8 +1,17 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Dynamically load Node's native modules to bypass Cloudflare Pages / Workers Edge bundler static-analysis
-const fs = typeof window === 'undefined' && process.env.NEXT_RUNTIME !== 'edge' ? require('f' + 's') : null;
-const path = typeof window === 'undefined' && process.env.NEXT_RUNTIME !== 'edge' ? require('p' + 'ath') : null;
+// Safely load Node's native modules, catching failures in non-Node runtimes (like Cloudflare Pages/Workers)
+let fs: any = null;
+let path: any = null;
+
+if (typeof window === 'undefined') {
+  try {
+    fs = require('f' + 's');
+    path = require('p' + 'ath');
+  } catch (err) {
+    // Dynamic require failed (e.g. running in an edge worker isolate environment)
+  }
+}
 
 // Define DB Types
 export interface Clinic {

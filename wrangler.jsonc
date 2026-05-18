@@ -6,6 +6,14 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://acwkihnwlhvjdlgbtulj.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_9YhfFUDqnKQd47y41HBHmg_Wlp3ptKm",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_9YhfFUDqnKQd47y41HBHmg_Wlp3ptKm",
+    "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51T7Sg1Rwpqr3y9eEC88urHFpp9RVywbD4vUcQyGilrYcIUHpD5r7FA3Rz3vsD8a1Ne5c8kmXilongCxx5MjfD3Fu00tVoGgTJX",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADROiE3Sw9ORY3R6",
+    "TWILIO_PHONE_NUMBER": "+18669837226"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
