@@ -9,11 +9,12 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "opennextjs-cloudflare build",
+    "build:next": "next build",
     "start": "next start",
     "lint": "next lint",
-    "build:worker": "opennextjs-cloudflare build",
-    "deploy": "opennextjs-cloudflare build && wrangler deploy"
+    "build:worker": "npm run build",
+    "deploy": "npm run build && opennextjs-cloudflare deploy"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.5.0",
