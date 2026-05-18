@@ -3,10 +3,10 @@ export async function sendTwilioSMS(to: string, body: string): Promise<{ success
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const from = process.env.TWILIO_PHONE_NUMBER;
 
-  // Gracefully skip and fallback to simulated log if keys are missing
+  // Return clear error if keys are missing to inform the user
   if (!accountSid || !authToken || !from) {
-    console.warn('Twilio credentials not configured. Falling back to log simulation.');
-    return { success: true }; // Simulation fallback counts as success for dev/trial logins!
+    console.warn('Twilio credentials not configured. SMS dispatch skipped.');
+    return { success: false, error: 'TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, or TWILIO_PHONE_NUMBER not configured. Please add them to your Cloudflare environment variables!' };
   }
 
   try {

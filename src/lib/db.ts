@@ -650,18 +650,9 @@ export class DBBroker {
           msg = msg.replace(/{{clinic_name}}/g, clinic.name);
           msg = msg.replace(/{{refill_date}}/g, patient.next_refill_date);
 
-          // Log the reminder
-          await this.createReminder({
-            patient_id: patient.id,
-            clinic_id: clinic.id,
-            sent_at: new Date().toISOString(),
-            channel: patient.reminder_channel,
-            response: null,
-            status: 'sent',
-            message_body: msg
-          });
-
           // Send physical dispatch conditionally based on channel
+          let dispatchSuccess = false;
+          let dispatchError = '';
           try {
             if (patient.reminder_channel === 'Email') {
               const { sendResendEmail } = require('./resend');
@@ -676,18 +667,36 @@ export class DBBroker {
                   </div>
                 </div>
               `;
-              await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+              const res = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+              dispatchSuccess = res.success;
+              if (!res.success) dispatchError = res.error || 'Resend rejected the request';
             } else {
               const { sendTwilioSMS } = require('./twilio');
-              await sendTwilioSMS(patient.phone, msg);
+              const res = await sendTwilioSMS(patient.phone, msg);
+              dispatchSuccess = res.success;
+              if (!res.success) dispatchError = res.error || 'Twilio rejected the request';
             }
-          } catch (dispatchErr) {
+          } catch (dispatchErr: any) {
             console.error('Automated daily scan dispatch failed:', dispatchErr);
+            dispatchError = dispatchErr.message || String(dispatchErr);
           }
 
-          // Mark patient status as pending (since reminder was sent and is awaiting reply)
-          await this.updatePatient(patient.id, { status: 'pending' });
-          sent++;
+          // Log the reminder with the actual status of the physical transmission!
+          await this.createReminder({
+            patient_id: patient.id,
+            clinic_id: clinic.id,
+            sent_at: new Date().toISOString(),
+            channel: patient.reminder_channel,
+            response: dispatchSuccess ? null : `Physical send failed: ${dispatchError}`,
+            status: dispatchSuccess ? 'sent' : 'failed',
+            message_body: msg
+          });
+
+          if (dispatchSuccess) {
+            // Mark patient status as pending (since reminder was sent and is awaiting reply)
+            await this.updatePatient(patient.id, { status: 'pending' });
+            sent++;
+          }
         }
       }
     }
