@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { DBBroker } from '@/lib/db';
 import { sendTwilioSMS } from '@/lib/twilio';
+import { sendResendEmail } from '@/lib/resend';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,11 +53,26 @@ export async function POST(request: Request) {
       message_body: msg
     });
 
-    // 5. Fire physical Twilio SMS dispatch
+    // 5. Fire physical dispatch conditionally based on channel
     try {
-      await sendTwilioSMS(patient.phone, msg);
-    } catch (twilioErr) {
-      console.error('Physical Twilio message dispatch failed:', twilioErr);
+      if (patient.reminder_channel === 'Email') {
+        const formattedHtml = `
+          <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
+            <div style="font-size: 20px; font-weight: 800; color: #2563eb; margin-bottom: 20px;">${clinic.name}</div>
+            <div style="font-size: 16px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
+              ${msg.replace(/\n/g, '<br/>')}
+            </div>
+            <div style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+              This is an automated prescription refill reminder sent on behalf of ${clinic.name}.
+            </div>
+          </div>
+        `;
+        await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+      } else {
+        await sendTwilioSMS(patient.phone, msg);
+      }
+    } catch (dispatchErr) {
+      console.error('Physical dispatch failed:', dispatchErr);
     }
 
     // 6. Shift patient status to pending
