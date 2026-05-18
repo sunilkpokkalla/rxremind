@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { 
   CreditCard, 
   Check, 
@@ -19,6 +20,9 @@ interface BillingClientProps {
 }
 
 export default function BillingClient({ clinic }: BillingClientProps) {
+  const searchParams = useSearchParams();
+  const showSuccessBanner = searchParams.get('success') === 'true';
+
   const [isPending, startTransition] = useTransition();
   const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Growth' | 'Pro' | null>(null);
   const [checkoutStep, setCheckoutStep] = useState(0);
@@ -74,56 +78,49 @@ export default function BillingClient({ clinic }: BillingClientProps) {
     }
   ];
 
-  // Stripe Checkout pipeline simulator
-  const handleUpgradeClick = (planName: 'Starter' | 'Growth' | 'Pro') => {
+  // Stripe Checkout production redirect pipeline
+  const handleUpgradeClick = async (planName: 'Starter' | 'Growth' | 'Pro') => {
     if (clinic.plan === planName) return;
 
     setCheckoutPlan(planName);
-    setCheckoutStep(0);
+    setCheckoutStep(0); // Connecting to secure API
     setStatusMessage(null);
 
-    // Sequence 1: Connecting (1000ms)
-    setTimeout(() => {
-      setCheckoutStep(1); // Authenticating
-      
-      // Sequence 2: Authenticating (1000ms)
+    try {
+      // 1. Send the POST checkout request
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planName }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.url) {
+        throw new Error(data.error || 'Failed to create payment session');
+      }
+
+      // 2. Advance step to Redirection (800ms buffer)
       setTimeout(() => {
-        setCheckoutStep(2); // Generating Subscription Invoice
+        setCheckoutStep(1); // Redirecting to Stripe
         
-        // Sequence 3: Generating invoice (800ms)
         setTimeout(() => {
-          setCheckoutStep(3); // Completing Sync
-          
-          // Sequence 4: Finalize Server action (800ms)
-          setTimeout(() => {
-            startTransition(async () => {
-              try {
-                const res = await upgradePlanAction(clinic.id, planName);
-                setStatusMessage(res.message);
-                setCheckoutStep(4); // Success Completion
-                
-                // Close modal after 1.5s
-                setTimeout(() => {
-                  setCheckoutPlan(null);
-                  setCheckoutStep(0);
-                }, 1500);
-              } catch (err) {
-                setStatusMessage('Stripe Checkout gateway transaction failed.');
-                setCheckoutStep(5); // Error
-              }
-            });
-          }, 800);
-        }, 800);
+          // 3. Perform redirect to live Stripe Checkout
+          window.location.href = data.url;
+        }, 1200);
       }, 1000);
-    }, 1000);
+
+    } catch (err: any) {
+      console.error('Stripe billing integration error:', err);
+      setStatusMessage(err.message || 'Stripe Checkout gateway transaction failed.');
+      setCheckoutStep(5); // Error completion
+    }
   };
 
   const getCheckoutStepMessage = () => {
     switch (checkoutStep) {
       case 0: return 'Connecting to Stripe secure checkout API...';
-      case 1: return 'Authenticating clinic merchant account...';
-      case 2: return 'Generating subscription agreement and invoice...';
-      case 3: return 'Synchronizing clinic database tier credentials...';
+      case 1: return 'Redirecting to Stripe secure hosted gateway...';
       case 4: return 'Subscription Updated! Payment Completed.';
       case 5: return 'Transaction failed. Please try again.';
       default: return 'Loading secure gateway...';
@@ -132,6 +129,19 @@ export default function BillingClient({ clinic }: BillingClientProps) {
 
   return (
     <div className="space-y-6">
+      {/* Stripe Payment Success Alert */}
+      {showSuccessBanner && (
+        <div className="p-4 bg-emerald-50 border border-emerald-500/10 text-emerald-800 text-sm font-semibold rounded-2xl flex items-center space-x-3 animate-fade-in mb-6 shadow-sm">
+          <div className="bg-emerald-500 text-white p-1.5 rounded-lg">
+            <ShieldCheck className="h-5 w-5" />
+          </div>
+          <div>
+            <p className="font-extrabold text-emerald-950">Subscription Payment Completed!</p>
+            <p className="text-slate-600 font-medium text-xs mt-0.5">Your Stripe subscription transaction cleared successfully. Welcome to the {clinic.plan} plan tier!</p>
+          </div>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="border-b border-slate-100 pb-4">
         <span className="text-[10px] text-primary font-bold uppercase tracking-wider">Subscription Management</span>

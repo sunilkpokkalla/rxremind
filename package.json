@@ -16,6 +16,7 @@
     "deploy": "opennextjs-cloudflare build && wrangler deploy"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.5.0",
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.105.4",
     "cookie": "^1.1.1",
@@ -23,7 +24,8 @@
     "lucide-react": "^1.16.0",
     "next": "^15.5.18",
     "react": "^19.2.6",
-    "react-dom": "^19.2.6"
+    "react-dom": "^19.2.6",
+    "stripe": "^22.1.1"
   },
   "devDependencies": {
     "@opennextjs/cloudflare": "^1.19.10",

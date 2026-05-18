@@ -15,7 +15,8 @@ export async function middleware(request: NextRequest) {
   if (
     pathname.startsWith('/api/cron') ||
     pathname.startsWith('/api/reminders/incoming') ||
-    pathname.startsWith('/api/auth/callback')
+    pathname.startsWith('/api/auth/callback') ||
+    pathname.startsWith('/api/webhooks/stripe')
   ) {
     return NextResponse.next();
   }
@@ -103,6 +104,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/cron|api/reminders/incoming|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.webp).*)',
+    '/((?!api/cron|api/reminders/incoming|api/webhooks/stripe|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.webp).*)',
   ],
 };
