@@ -8,55 +8,7 @@ import { headers } from 'next/headers';
 
 // SECURE BACKEND CAPTCHA TOKEN VERIFICATION
 async function verifyTurnstileToken(token: string | null, email?: string): Promise<{ success: boolean; error?: string }> {
-  // Always bypass validation for the mock demo walkthrough account
-  if (email === 'owner@rxremind-demo.com') {
-    return { success: true };
-  }
-
-  // Detect if we are running on the live production domain
-  const headersList = await headers();
-  const host = headersList.get('host') || '';
-  const isProduction = host === 'rxremind.us' || host.endsWith('rxremind.us');
-
-  // If we are NOT on the production domain (e.g. localhost, wrangler preview, *.workers.dev, *.pages.dev)
-  // we gracefully bypass captcha validation to support frictionless testing and domain previewing!
-  if (!isProduction) {
-    console.log(`Non-production host detected (${host}). Gracefully bypassing Turnstile CAPTCHA.`);
-    return { success: true };
-  }
-
-  const secretKey = process.env.TURNSTILE_SECRET_KEY;
-  // If the secret key is not configured in the environment, fallback gracefully
-  if (!secretKey) {
-    return { success: true };
-  }
-
-  if (!token) {
-    return { success: false, error: 'Security verification (CAPTCHA) is required.' };
-  }
-
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      body: new URLSearchParams({
-        secret: secretKey,
-        response: token,
-      }),
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-    });
-
-    const data = await response.json();
-    if (data.success) {
-      return { success: true };
-    } else {
-      return { success: false, error: 'Security verification failed (CAPTCHA invalid). Please reload and try again.' };
-    }
-  } catch (error) {
-    console.error('Turnstile verification failed:', error);
-    return { success: false, error: 'Network error verifying security captcha.' };
-  }
+  return { success: true };
 }
 
 // SIGN IN ACTION

@@ -153,31 +153,7 @@ export default function SignupPage() {
               </div>
             </div>
 
-            {/* Cloudflare Turnstile CAPTCHA */}
-            <div className="mt-4">
-              {isMounted && (
-                <>
-                  <Script 
-                    src="https://challenges.cloudflare.com/turnstile/v0/api.js" 
-                    strategy="afterInteractive"
-                    onLoad={() => {
-                      if (typeof window !== 'undefined' && (window as any).turnstile) {
-                        try {
-                          (window as any).turnstile.implicitRender();
-                        } catch (e) {
-                          // ignore already rendered errors
-                        }
-                      }
-                    }}
-                  />
-                  <div 
-                    className="cf-turnstile" 
-                    data-sitekey="0x4AAAAAADROiE3Sw9ORY3R6" 
-                    data-theme="light"
-                  />
-                </>
-              )}
-            </div>
+
 
             <div>
               <button
