@@ -334,4 +334,44 @@ export async function updatePatientAction(patientId: string, prevState: any, for
   redirect('/patients');
 }
 
+// BATCH IMPORT PATIENTS ACTION
+export async function importPatientsAction(patients: Array<{
+  name: string;
+  phone: string;
+  email?: string;
+  medication_name: string;
+  refill_frequency_days: number;
+  next_refill_date: string;
+  reminder_channel: 'WhatsApp' | 'SMS' | 'Email';
+}>) {
+  const session = await AuthManager.getCurrentUser();
+  if (!session) {
+    throw new Error('You must be logged in to import patients');
+  }
+
+  const clinic = await DBBroker.getClinicByOwner(session.id);
+  if (!clinic) {
+    throw new Error('Your clinic account could not be found. Please log in again.');
+  }
+
+  // Save each patient record to database
+  for (const patient of patients) {
+    await DBBroker.createPatient({
+      clinic_id: clinic.id,
+      name: patient.name.trim(),
+      phone: patient.phone.trim(),
+      email: (patient.email || '').trim(),
+      medication_name: patient.medication_name.trim(),
+      refill_frequency_days: patient.refill_frequency_days,
+      next_refill_date: patient.next_refill_date.trim(),
+      reminder_channel: patient.reminder_channel,
+      status: 'confirmed',
+    });
+  }
+
+  revalidatePath('/patients');
+  revalidatePath('/');
+  return { success: true, count: patients.length };
+}
+
 
