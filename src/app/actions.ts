@@ -195,27 +195,36 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
 
     // Physical Dispatch conditionally based on channel
     if (patient.reminder_channel === 'Email') {
-      const { sendSMTPMail } = require('@/lib/nodemailer');
+      const { sendResendEmail } = require('@/lib/resend');
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://rxremind.us';
       const formattedHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
           <div style="font-size: 20px; font-weight: 800; color: #2563eb; margin-bottom: 20px;">${clinic.name}</div>
           <div style="font-size: 16px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
             ${msg.replace(/\n/g, '<br/>')}
           </div>
+
+          <div style="margin: 28px 0; text-align: center;">
+            <a href="${baseUrl}/api/confirm?id=${patient.id}" style="display: inline-block; padding: 12px 28px; color: #ffffff; background-color: #2563eb; border-radius: 12px; font-weight: 700; text-decoration: none; font-size: 14px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+              Confirm Prescription Refill
+            </a>
+          </div>
+
           <div style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px;">
             This is an automated prescription refill reminder sent on behalf of ${clinic.name}.
           </div>
         </div>
       `;
-      // Send silently using Zoho SMTP with the clinic's custom name as the sender display!
-      const dispatchResult = await sendSMTPMail(
+      // Send dynamically from your central verified domain 'noreply@rxremind.us' displaying the clinic's own name as the header!
+      const dispatchResult = await sendResendEmail(
         patient.email, 
         `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
         formattedHtml, 
+        'noreply@rxremind.us', 
         clinic.name
       );
       if (!dispatchResult.success) {
-        return { success: false, error: dispatchResult.error || 'SMTP rejected the email dispatch request.' };
+        return { success: false, error: dispatchResult.error || 'Resend rejected the email dispatch request.' };
       }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
