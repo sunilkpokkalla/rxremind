@@ -93,8 +93,13 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
     setStatusMessage(null);
     startTransition(async () => {
       try {
-        await sendSingleReminderAction(id);
-        setStatusMessage({ text: `Manual reminder successfully sent to ${name}!`, type: 'success' });
+        const res = await sendSingleReminderAction(id);
+        if (res && res.mailtoUrl) {
+          window.location.href = res.mailtoUrl;
+          setStatusMessage({ text: `Email draft successfully prepared for ${name}! Please confirm and send it in your mail client.`, type: 'success' });
+        } else {
+          setStatusMessage({ text: `Manual reminder successfully sent to ${name}!`, type: 'success' });
+        }
       } catch (err: any) {
         setStatusMessage({ text: `Failed to notify ${name}: ${err.message || 'Unknown error'}`, type: 'error' });
       }

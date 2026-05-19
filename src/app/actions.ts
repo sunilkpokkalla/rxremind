@@ -181,6 +181,27 @@ export async function sendSingleReminderAction(patientId: string) {
   msg = msg.replace(/{{clinic_name}}/g, clinic.name);
   msg = msg.replace(/{{refill_date}}/g, patient.next_refill_date);
 
+  // Handle 100% Free Client-Side Mailto email launcher
+  if (patient.reminder_channel === 'Email') {
+    await DBBroker.createReminder({
+      patient_id: patient.id,
+      clinic_id: clinic.id,
+      sent_at: new Date().toISOString(),
+      channel: patient.reminder_channel,
+      response: 'Launched via client email client (Free Setup)',
+      status: 'sent',
+      message_body: msg
+    });
+
+    await DBBroker.updatePatient(patient.id, { status: 'pending' });
+    revalidatePath('/');
+
+    // Construct the client-side launcher URL
+    const mailtoUrl = `mailto:${patient.email}?subject=${encodeURIComponent(`Prescription Refill Reminder from ${clinic.name}`)}&body=${encodeURIComponent(msg)}`;
+    return { success: true, mailtoUrl };
+  }
+
+  // Handle Twilio SMS/WhatsApp Outgoing Dispatch
   await DBBroker.createReminder({
     patient_id: patient.id,
     clinic_id: clinic.id,
@@ -191,31 +212,11 @@ export async function sendSingleReminderAction(patientId: string) {
     message_body: msg
   });
 
-  // Physical Dispatch conditionally based on channel
   try {
-    if (patient.reminder_channel === 'Email') {
-      const { sendResendEmail } = require('@/lib/resend');
-      const formattedHtml = `
-        <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
-          <div style="font-size: 20px; font-weight: 800; color: #2563eb; margin-bottom: 20px;">${clinic.name}</div>
-          <div style="font-size: 16px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
-            ${msg.replace(/\n/g, '<br/>')}
-          </div>
-          <div style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 16px;">
-            This is an automated prescription refill reminder sent on behalf of ${clinic.name}.
-          </div>
-        </div>
-      `;
-      const dispatchResult = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
-      if (!dispatchResult.success) {
-        throw new Error(dispatchResult.error || 'Resend rejected the email dispatch request.');
-      }
-    } else {
-      const { sendTwilioSMS } = require('@/lib/twilio');
-      const dispatchResult = await sendTwilioSMS(patient.phone, msg);
-      if (!dispatchResult.success) {
-        throw new Error(dispatchResult.error || 'Twilio rejected the SMS request.');
-      }
+    const { sendTwilioSMS } = require('@/lib/twilio');
+    const dispatchResult = await sendTwilioSMS(patient.phone, msg);
+    if (!dispatchResult.success) {
+      throw new Error(dispatchResult.error || 'Twilio rejected the SMS request.');
     }
   } catch (dispatchErr: any) {
     console.error('Manual physical reminder dispatch failed:', dispatchErr);
@@ -224,6 +225,7 @@ export async function sendSingleReminderAction(patientId: string) {
 
   await DBBroker.updatePatient(patient.id, { status: 'pending' });
   revalidatePath('/');
+  return { success: true };
 }
 
 // DELETE PATIENT ACTION
