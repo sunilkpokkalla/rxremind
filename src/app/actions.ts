@@ -168,6 +168,10 @@ export async function sendSingleReminderAction(patientId: string) {
   const clinic = await DBBroker.getClinicById(patient.clinic_id);
   if (!clinic) throw new Error('Clinic not found');
 
+  if (!clinic.subscription_active) {
+    throw new Error('Subscription required. Please activate your clinic plan in the Billing tab.');
+  }
+
   let msg = clinic.reminder_template || '';
   msg = msg.replace(/{{patient_name}}/g, patient.name);
   msg = msg.replace(/{{medication_name}}/g, patient.medication_name);
@@ -253,7 +257,10 @@ export async function updateSettingsAction(clinicId: string, prevState: any, for
 
 // UPGRADE PLAN SERVER ACTION (STRIPE SIMULATOR)
 export async function upgradePlanAction(clinicId: string, selectedPlan: 'Starter' | 'Growth' | 'Pro') {
-  await DBBroker.updateClinic(clinicId, { plan: selectedPlan });
+  await DBBroker.updateClinic(clinicId, { 
+    plan: selectedPlan,
+    subscription_active: true
+  });
   revalidatePath('/billing');
   revalidatePath('/');
   return { success: true, message: `Subscription successfully upgraded to ${selectedPlan} Plan!` };
@@ -271,6 +278,10 @@ export async function createPatientAction(prevState: any, formData: FormData) {
   const clinic = await DBBroker.getClinicByOwner(session.id);
   if (!clinic) {
     return { success: false, error: 'Your clinic account could not be found. Please try logging out and logging back in.' };
+  }
+
+  if (!clinic.subscription_active) {
+    return { success: false, error: 'Subscription required. Please activate your clinic plan in the Billing tab.' };
   }
 
   const name = formData.get('name') as string;
@@ -352,6 +363,10 @@ export async function importPatientsAction(patients: Array<{
   const clinic = await DBBroker.getClinicByOwner(session.id);
   if (!clinic) {
     throw new Error('Your clinic account could not be found. Please log in again.');
+  }
+
+  if (!clinic.subscription_active) {
+    throw new Error('Subscription required. Please activate your clinic plan in the Billing tab.');
   }
 
   // Save each patient record to database

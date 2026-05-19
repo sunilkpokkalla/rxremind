@@ -30,6 +30,7 @@ export default async function RemindersPage() {
 
   return (
     <RemindersClient 
+      clinic={clinic}
       reminders={reminders} 
       patients={patients} 
     />

@@ -22,6 +22,7 @@ export interface Clinic {
   phone: string;
   logo_url: string;
   plan: 'Starter' | 'Growth' | 'Pro';
+  subscription_active?: boolean;
   reminder_days_before: number;
   auto_reminders: boolean;
   reminder_template: string;
@@ -88,6 +89,7 @@ function getSeedData(): LocalDB {
       phone: '+1 (555) 934-2391',
       logo_url: '',
       plan: 'Growth',
+      subscription_active: true,
       reminder_days_before: 3,
       auto_reminders: true,
       reminder_template: 'Hi {{patient_name}}, this is a friendly reminder from {{clinic_name}} that your prescription for {{medication_name}} is due for a refill on {{refill_date}}. Reply YES to confirm.',

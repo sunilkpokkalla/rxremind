@@ -25,5 +25,5 @@ export default async function PatientsPage() {
     redirect('/login?error=database_access_denied');
   }
 
-  return <PatientsClient patients={patients} />;
+  return <PatientsClient clinic={clinic} patients={patients} />;
 }

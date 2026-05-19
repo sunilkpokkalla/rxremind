@@ -17,15 +17,16 @@ import {
   Sparkles,
   ChevronDown
 } from 'lucide-react';
-import { Reminder, Patient } from '@/lib/db';
+import { Reminder, Patient, Clinic } from '@/lib/db';
 import { sendSingleReminderAction } from '@/app/actions';
 
 interface RemindersClientProps {
+  clinic: Clinic;
   reminders: Reminder[];
   patients: Patient[];
 }
 
-export default function RemindersClient({ reminders, patients }: RemindersClientProps) {
+export default function RemindersClient({ clinic, reminders, patients }: RemindersClientProps) {
   const [activeChannel, setActiveChannel] = useState<'all' | 'WhatsApp' | 'SMS' | 'Email'>('all');
   const [activeStatus, setActiveStatus] = useState<'all' | 'sent' | 'confirmed' | 'failed'>('all');
   const [filterDate, setFilterDate] = useState('');
@@ -69,6 +70,34 @@ export default function RemindersClient({ reminders, patients }: RemindersClient
 
   return (
     <div className="space-y-6">
+      {/* Premium Subscription Inactive Notice Bar */}
+      {!clinic.subscription_active && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in-50 duration-300">
+          <div className="flex items-start space-x-3.5">
+            <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <svg className="h-5 w-5 animate-pulse-soft text-amber-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="text-xs">
+              <span className="font-extrabold text-amber-950 block text-sm">Subscription Pending / Inactive</span>
+              <p className="text-slate-600 mt-1 leading-relaxed max-w-2xl font-medium">
+                Your clinic's automated reminders and patient outreach services are currently paused. Enable your billing subscription plan to immediately activate daily refill checks, manual outreach notifications, and CSV list imports.
+              </p>
+            </div>
+          </div>
+          <a
+            href="/billing"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-600/10 transition flex-shrink-0 cursor-pointer"
+          >
+            Activate Subscription Plan
+            <svg className="ml-1.5 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>

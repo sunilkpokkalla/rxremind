@@ -104,6 +104,30 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
 
   return (
     <div className="space-y-6">
+      {/* Premium Subscription Inactive Notice Bar */}
+      {!clinic.subscription_active && (
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in-50 duration-300">
+          <div className="flex items-start space-x-3.5">
+            <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 shadow-sm">
+              <AlertTriangle className="h-5 w-5 animate-pulse-soft" />
+            </div>
+            <div className="text-xs">
+              <span className="font-extrabold text-amber-950 block text-sm">Subscription Pending / Inactive</span>
+              <p className="text-slate-600 mt-1 leading-relaxed max-w-2xl font-medium">
+                Your clinic's automated reminders and patient outreach services are currently paused. Enable your billing subscription plan to immediately activate daily refill checks, manual outreach notifications, and CSV list imports.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/billing"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-600/10 transition flex-shrink-0 cursor-pointer"
+          >
+            Activate Subscription Plan
+            <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+          </Link>
+        </div>
+      )}
+
       {/* Top Banner & Quick Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-6 bg-white rounded-3xl border border-slate-200/80 shadow-sm gap-4">
         <div>

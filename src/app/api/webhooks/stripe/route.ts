@@ -41,7 +41,10 @@ export async function POST(req: Request) {
 
       if (clinicId && planName) {
         // Safe database upgrade mutation
-        await DBBroker.updateClinic(clinicId, { plan: planName });
+        await DBBroker.updateClinic(clinicId, { 
+          plan: planName,
+          subscription_active: true
+        });
         console.log(`Clinic ${clinicId} successfully upgraded to tier ${planName} via Stripe webhook.`);
       } else {
         console.error('Webhook session metadata was missing clinicId or planName:', session.metadata);
