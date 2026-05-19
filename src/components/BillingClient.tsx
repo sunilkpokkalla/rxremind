@@ -170,13 +170,17 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-2">
             <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold text-primary-light uppercase tracking-wider">
-              Current Billing Account
+              {clinic.subscription_active ? 'Current Billing Account' : 'Inactive / Sandbox Test Mode'}
             </span>
             <h2 className="text-3xl font-extrabold tracking-tight">
-              {clinic.plan} Plan
+              {clinic.subscription_active ? `${clinic.plan} Plan` : 'No Active Subscription'}
             </h2>
             <p className="text-xs text-slate-400">
-              Billing Date: <span className="font-semibold text-slate-300">Monthly, renews on the 1st</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span>
+              {clinic.subscription_active ? (
+                <>Billing Date: <span className="font-semibold text-slate-300">Monthly, renews on the 1st</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
+              ) : (
+                <>Status: <span className="font-semibold text-amber-400">Outreach Restricted (1 test patient sandbox limit)</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
+              )}
             </p>
           </div>
 
@@ -195,7 +199,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
       {/* Pricing Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
         {plans.map((plan) => {
-          const isCurrent = clinic.plan === plan.name;
+          const isCurrent = clinic.subscription_active && clinic.plan === plan.name;
           return (
             <div 
               key={plan.name} 
@@ -242,7 +246,11 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
                       : 'bg-slate-900 text-white hover:bg-slate-800'
                   }`}
                 >
-                  {isCurrent ? 'Active Subscription' : plan.buttonText}
+                  {isCurrent 
+                    ? 'Active Subscription' 
+                    : plan.name === 'Starter' && !clinic.subscription_active 
+                    ? 'Activate Starter Plan' 
+                    : plan.buttonText}
                 </button>
               </div>
             </div>
