@@ -195,7 +195,7 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
 
     // Physical Dispatch conditionally based on channel
     if (patient.reminder_channel === 'Email') {
-      const { sendResendEmail } = require('@/lib/resend');
+      const { sendSendGridEmail } = require('@/lib/sendgrid');
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://rxremind.us';
       const formattedHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -216,7 +216,7 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
         </div>
       `;
       // Send dynamically from your central verified domain 'noreply@rxremind.us' displaying the clinic's own name as the header!
-      const dispatchResult = await sendResendEmail(
+      const dispatchResult = await sendSendGridEmail(
         patient.email, 
         `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
         formattedHtml, 
@@ -224,7 +224,7 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
         clinic.name
       );
       if (!dispatchResult.success) {
-        return { success: false, error: dispatchResult.error || 'Resend rejected the email dispatch request.' };
+        return { success: false, error: dispatchResult.error || 'SendGrid rejected the email dispatch request.' };
       }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
