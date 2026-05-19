@@ -161,39 +161,39 @@ export async function simulatePatientReplyAction(patientId: string, responseText
 }
 
 // SEND SINGLE MANUAL REMINDER ACTION
-export async function sendSingleReminderAction(patientId: string) {
-  const patient = await DBBroker.getPatientById(patientId);
-  if (!patient) throw new Error('Patient not found');
-  
-  const clinic = await DBBroker.getClinicById(patient.clinic_id);
-  if (!clinic) throw new Error('Clinic not found');
-
-  if (!clinic.subscription_active) {
-    const existingPatients = await DBBroker.getPatients(clinic.id);
-    if (existingPatients.length > 1) {
-      throw new Error('Subscription required. Please activate your clinic plan in the Billing tab to send reminders to multiple patients.');
-    }
-  }
-
-  let msg = clinic.reminder_template || '';
-  msg = msg.replace(/{{patient_name}}/g, patient.name);
-  msg = msg.replace(/{{medication_name}}/g, patient.medication_name);
-  msg = msg.replace(/{{clinic_name}}/g, clinic.name);
-  msg = msg.replace(/{{refill_date}}/g, patient.next_refill_date);
-
-  // Dispatch individual reminder
-  await DBBroker.createReminder({
-    patient_id: patient.id,
-    clinic_id: clinic.id,
-    sent_at: new Date().toISOString(),
-    channel: patient.reminder_channel,
-    response: null,
-    status: 'sent',
-    message_body: msg
-  });
-
-  // Physical Dispatch conditionally based on channel
+export async function sendSingleReminderAction(patientId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    const patient = await DBBroker.getPatientById(patientId);
+    if (!patient) return { success: false, error: 'Patient not found' };
+    
+    const clinic = await DBBroker.getClinicById(patient.clinic_id);
+    if (!clinic) return { success: false, error: 'Clinic not found' };
+
+    if (!clinic.subscription_active) {
+      const existingPatients = await DBBroker.getPatients(clinic.id);
+      if (existingPatients.length > 1) {
+        return { success: false, error: 'Subscription required. Please activate your clinic plan in the Billing tab to send reminders to multiple patients.' };
+      }
+    }
+
+    let msg = clinic.reminder_template || '';
+    msg = msg.replace(/{{patient_name}}/g, patient.name);
+    msg = msg.replace(/{{medication_name}}/g, patient.medication_name);
+    msg = msg.replace(/{{clinic_name}}/g, clinic.name);
+    msg = msg.replace(/{{refill_date}}/g, patient.next_refill_date);
+
+    // Dispatch individual reminder
+    await DBBroker.createReminder({
+      patient_id: patient.id,
+      clinic_id: clinic.id,
+      sent_at: new Date().toISOString(),
+      channel: patient.reminder_channel,
+      response: null,
+      status: 'sent',
+      message_body: msg
+    });
+
+    // Physical Dispatch conditionally based on channel
     if (patient.reminder_channel === 'Email') {
       const { sendResendEmail } = require('@/lib/resend');
       const formattedHtml = `
@@ -210,23 +210,23 @@ export async function sendSingleReminderAction(patientId: string) {
       // Send silently in the background from the Clinic Email Address configured in their Clinical Profile!
       const dispatchResult = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml, clinic.email);
       if (!dispatchResult.success) {
-        throw new Error(dispatchResult.error || 'Resend rejected the email dispatch request.');
+        return { success: false, error: dispatchResult.error || 'Resend rejected the email dispatch request.' };
       }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
       const dispatchResult = await sendTwilioSMS(patient.phone, msg);
       if (!dispatchResult.success) {
-        throw new Error(dispatchResult.error || 'Twilio rejected the SMS request.');
+        return { success: false, error: dispatchResult.error || 'Twilio rejected the SMS request.' };
       }
     }
+
+    await DBBroker.updatePatient(patient.id, { status: 'pending' });
+    revalidatePath('/');
+    return { success: true };
   } catch (dispatchErr: any) {
     console.error('Manual physical reminder dispatch failed:', dispatchErr);
-    throw new Error(`Physical transmission failed: ${dispatchErr.message || dispatchErr}`);
+    return { success: false, error: dispatchErr.message || 'An unexpected error occurred during dispatch.' };
   }
-
-  await DBBroker.updatePatient(patient.id, { status: 'pending' });
-  revalidatePath('/');
-  return { success: true };
 }
 
 // DELETE PATIENT ACTION

@@ -45,8 +45,12 @@ export default function RemindersClient({ clinic, reminders, patients }: Reminde
     setStatusMessage(null);
     startTransition(async () => {
       try {
-        await sendSingleReminderAction(quickSendPatientId);
-        setStatusMessage({ text: `Manual reminder successfully sent to ${patient.name}!`, type: 'success' });
+        const res = await sendSingleReminderAction(quickSendPatientId);
+        if (res && !res.success) {
+          setStatusMessage({ text: `Failed to notify ${patient.name}: ${res.error}`, type: 'error' });
+        } else {
+          setStatusMessage({ text: `Manual reminder successfully sent to ${patient.name}!`, type: 'success' });
+        }
         setQuickSendPatientId('');
       } catch (err) {
         setStatusMessage({ text: `Failed to notify ${patient.name}.`, type: 'error' });
