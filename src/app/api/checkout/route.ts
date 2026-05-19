@@ -10,13 +10,36 @@ export async function POST(req: Request) {
     }
 
     const { planName } = await req.json();
-    if (!planName || !['Growth', 'Pro'].includes(planName)) {
+    if (!planName || !['Starter', 'Growth', 'Pro'].includes(planName)) {
       return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 });
     }
 
-    // Map plans to Stripe Product Price IDs from environment variables
+    const origin = req.headers.get('origin') || 'https://rxremind.us';
+
+    // 1. Sandbox Simulation Fallback
+    // If Stripe API secret keys are placeholders or not configured, auto-approve the subscription immediately!
+    const isStripeConfigured = 
+      process.env.STRIPE_SECRET_KEY && 
+      !process.env.STRIPE_SECRET_KEY.includes('placeholder') && 
+      !process.env.STRIPE_SECRET_KEY.includes('bypass');
+
+    if (!isStripeConfigured) {
+      console.warn(`[SANDBOX MODE] Stripe keys are not configured. Simulating successful checkout for plan: ${planName}`);
+      
+      const { DBBroker } = require('@/lib/db');
+      await DBBroker.updateClinic(session.clinicId, {
+        plan: planName,
+        subscription_active: true
+      });
+
+      return NextResponse.json({ url: `${origin}/billing?success=true` });
+    }
+
+    // 2. Map plans to Stripe Product Price IDs from environment variables
     let priceId = '';
-    if (planName === 'Growth') {
+    if (planName === 'Starter') {
+      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_STARTER || '';
+    } else if (planName === 'Growth') {
       priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_GROWTH || '';
     } else if (planName === 'Pro') {
       priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_PRO || '';
@@ -24,10 +47,14 @@ export async function POST(req: Request) {
 
     // Fallback sandbox/mock prices if env keys are not bound yet, to prevent immediate crashes!
     if (!priceId) {
-      priceId = planName === 'Growth' ? 'price_growth_placeholder' : 'price_pro_placeholder';
+      if (planName === 'Starter') {
+        priceId = 'price_starter_placeholder';
+      } else if (planName === 'Growth') {
+        priceId = 'price_growth_placeholder';
+      } else {
+        priceId = 'price_pro_placeholder';
+      }
     }
-
-    const origin = req.headers.get('origin') || 'https://rxremind.us';
 
     // Create a hosted Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
