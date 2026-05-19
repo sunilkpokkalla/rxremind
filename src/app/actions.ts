@@ -207,8 +207,14 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
           </div>
         </div>
       `;
-      // Send silently in the background from the Clinic Email Address configured in their Clinical Profile!
-      const dispatchResult = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml, clinic.email);
+      // Send dynamically from your central verified domain 'noreply@rxremind.us' displaying the clinic's own name as the header!
+      const dispatchResult = await sendResendEmail(
+        patient.email, 
+        `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
+        formattedHtml, 
+        'noreply@rxremind.us', 
+        clinic.name
+      );
       if (!dispatchResult.success) {
         return { success: false, error: dispatchResult.error || 'Resend rejected the email dispatch request.' };
       }

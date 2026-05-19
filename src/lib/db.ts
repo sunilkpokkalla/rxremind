@@ -669,7 +669,13 @@ export class DBBroker {
                   </div>
                 </div>
               `;
-              const res = await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
+              const res = await sendResendEmail(
+                patient.email, 
+                `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
+                formattedHtml, 
+                'noreply@rxremind.us', 
+                clinic.name
+              );
               dispatchSuccess = res.success;
               if (!res.success) dispatchError = res.error || 'Resend rejected the request';
             } else {
