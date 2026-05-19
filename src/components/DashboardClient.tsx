@@ -73,19 +73,11 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
     setStatusMessage(null);
     startTransition(async () => {
       try {
-        const res = await sendSingleReminderAction(patientId);
-        if (res && res.mailtoUrl) {
-          window.location.href = res.mailtoUrl;
-          setStatusMessage({
-            text: `Email draft successfully prepared for ${patientName}! Please confirm and send it in your mail client.`,
-            type: 'success'
-          });
-        } else {
-          setStatusMessage({
-            text: `Emergency manual reminder successfully dispatched to ${patientName}!`,
-            type: 'success'
-          });
-        }
+        await sendSingleReminderAction(patientId);
+        setStatusMessage({
+          text: `Emergency manual reminder successfully dispatched to ${patientName}!`,
+          type: 'success'
+        });
       } catch (err) {
         setStatusMessage({ text: `Failed to notify ${patientName}.`, type: 'error' });
       }

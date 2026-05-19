@@ -4,7 +4,7 @@
  * Avoids extra NPM bundle size, optimal for Edge Runtimes like Cloudflare.
  */
 
-export async function sendResendEmail(to: string, subject: string, htmlContent: string): Promise<{ success: boolean; error?: string }> {
+export async function sendResendEmail(to: string, subject: string, htmlContent: string, fromOverride?: string): Promise<{ success: boolean; error?: string }> {
   // Use the SUPABASE_SERVICE_KEY as a dynamic proxy or search for RESEND_API_KEY
   const apiKey = process.env.RESEND_API_KEY || '';
   
@@ -14,6 +14,9 @@ export async function sendResendEmail(to: string, subject: string, htmlContent: 
   }
 
   try {
+    const fromEmail = fromOverride || process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
+    const cleanFrom = fromEmail.includes('@') ? fromEmail : 'onboarding@resend.dev';
+
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -21,7 +24,7 @@ export async function sendResendEmail(to: string, subject: string, htmlContent: 
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        from: 'RxRemind <noreply@rxremind.us>',
+        from: `RxRemind <${cleanFrom}>`,
         to: [to],
         subject: subject,
         html: htmlContent

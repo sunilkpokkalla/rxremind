@@ -35,6 +35,7 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
 
   // Local states for live preview
   const [clinicName, setClinicName] = useState(clinic.name);
+  const [clinicEmail, setClinicEmail] = useState(clinic.email || '');
   const [clinicPhone, setClinicPhone] = useState(clinic.phone || '');
   const [templateText, setTemplateText] = useState(clinic.reminder_template);
   const [daysBefore, setDaysBefore] = useState(clinic.reminder_days_before);
@@ -155,6 +156,24 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
                     className="block w-full px-3 py-2.5 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition"
                     placeholder="RxRemind Medical Clinic"
                   />
+                </div>
+
+                {/* Clinic Email */}
+                <div className="space-y-1.5 col-span-2">
+                  <label htmlFor="email" className="block text-xs font-bold text-slate-700">
+                    Clinic Profile Email Address <span className="text-danger">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={clinicEmail}
+                    onChange={(e) => setClinicEmail(e.target.value)}
+                    className="block w-full px-3 py-2.5 border border-slate-200 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm transition"
+                    placeholder="doctor@rxremind.us"
+                  />
+                  <p className="text-[10px] text-slate-400">Used dynamically as the secure sender address for your outgoing patient emails.</p>
                 </div>
 
                 {/* Clinic Phone */}
