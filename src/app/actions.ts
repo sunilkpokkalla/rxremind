@@ -195,7 +195,7 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
 
     // Physical Dispatch conditionally based on channel
     if (patient.reminder_channel === 'Email') {
-      const { sendResendEmail } = require('@/lib/resend');
+      const { sendSMTPMail } = require('@/lib/nodemailer');
       const formattedHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
           <div style="font-size: 20px; font-weight: 800; color: #2563eb; margin-bottom: 20px;">${clinic.name}</div>
@@ -207,16 +207,15 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
           </div>
         </div>
       `;
-      // Send dynamically from your central verified domain 'noreply@rxremind.us' displaying the clinic's own name as the header!
-      const dispatchResult = await sendResendEmail(
+      // Send silently using Zoho SMTP with the clinic's custom name as the sender display!
+      const dispatchResult = await sendSMTPMail(
         patient.email, 
         `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
         formattedHtml, 
-        'noreply@rxremind.us', 
         clinic.name
       );
       if (!dispatchResult.success) {
-        return { success: false, error: dispatchResult.error || 'Resend rejected the email dispatch request.' };
+        return { success: false, error: dispatchResult.error || 'SMTP rejected the email dispatch request.' };
       }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
