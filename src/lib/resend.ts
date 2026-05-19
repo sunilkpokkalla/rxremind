@@ -14,8 +14,6 @@ export async function sendResendEmail(to: string, subject: string, htmlContent: 
   }
 
   try {
-    const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
-
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -23,7 +21,7 @@ export async function sendResendEmail(to: string, subject: string, htmlContent: 
         'Authorization': `Bearer ${apiKey}`
       },
       body: JSON.stringify({
-        from: `RxRemind <${fromEmail}>`,
+        from: 'RxRemind <noreply@rxremind.us>',
         to: [to],
         subject: subject,
         html: htmlContent
