@@ -169,7 +169,10 @@ export async function sendSingleReminderAction(patientId: string) {
   if (!clinic) throw new Error('Clinic not found');
 
   if (!clinic.subscription_active) {
-    throw new Error('Subscription required. Please activate your clinic plan in the Billing tab.');
+    const existingPatients = await DBBroker.getPatients(clinic.id);
+    if (existingPatients.length > 1) {
+      throw new Error('Subscription required. Please activate your clinic plan in the Billing tab to send reminders to multiple patients.');
+    }
   }
 
   let msg = clinic.reminder_template || '';
@@ -281,7 +284,10 @@ export async function createPatientAction(prevState: any, formData: FormData) {
   }
 
   if (!clinic.subscription_active) {
-    return { success: false, error: 'Subscription required. Please activate your clinic plan in the Billing tab.' };
+    const existingPatients = await DBBroker.getPatients(clinic.id);
+    if (existingPatients.length >= 1) {
+      return { success: false, error: 'Subscription required to enroll more than 1 patient. Please activate your clinic plan in the Billing tab.' };
+    }
   }
 
   const name = formData.get('name') as string;
@@ -366,7 +372,7 @@ export async function importPatientsAction(patients: Array<{
   }
 
   if (!clinic.subscription_active) {
-    throw new Error('Subscription required. Please activate your clinic plan in the Billing tab.');
+    throw new Error('Bulk importing is disabled in test mode. Please activate your clinic plan in the Billing tab.');
   }
 
   // Save each patient record to database

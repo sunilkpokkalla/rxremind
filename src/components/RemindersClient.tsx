@@ -80,9 +80,15 @@ export default function RemindersClient({ clinic, reminders, patients }: Reminde
               </svg>
             </div>
             <div className="text-xs">
-              <span className="font-extrabold text-amber-950 block text-sm">Subscription Pending / Inactive</span>
+              <span className="font-extrabold text-amber-950 block text-sm">
+                {patients.length >= 1 ? 'Free Test Patient Enrolled' : 'Active Free Test Mode'}
+              </span>
               <p className="text-slate-600 mt-1 leading-relaxed max-w-2xl font-medium">
-                Your clinic's automated reminders and patient outreach services are currently paused. Enable your billing subscription plan to immediately activate daily refill checks, manual outreach notifications, and CSV list imports.
+                {patients.length >= 1 ? (
+                  `You have successfully enrolled 1 test patient (${patients[0]?.name || 'Patient'}). You can test sending manual reminder dispatches to this patient. To enroll more patients, import Excel/CSV sheets, or trigger automatic sweeps, please activate a billing subscription plan!`
+                ) : (
+                  "You are in active sandbox test mode! You can add exactly 1 test patient and dispatch manual outreach notifications. To enroll more patients, perform bulk spreadsheet uploads, or enable automatic daily sweep notifications, please activate your plan."
+                )}
               </p>
             </div>
           </div>
