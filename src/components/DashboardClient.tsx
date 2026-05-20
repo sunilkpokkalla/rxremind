@@ -18,7 +18,7 @@ import {
   RefreshCw
 } from 'lucide-react';
 import { Clinic, Patient, Reminder } from '@/lib/db';
-import { triggerScanAction, simulatePatientReplyAction, sendSingleReminderAction } from '@/app/actions';
+import { triggerScanAction, sendSingleReminderAction } from '@/app/actions';
 
 interface DashboardClientProps {
   clinic: Clinic;
@@ -29,15 +29,12 @@ interface DashboardClientProps {
 export default function DashboardClient({ clinic, patients, reminders }: DashboardClientProps) {
   const [isPending, startTransition] = useTransition();
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
-  const [selectedPatientReply, setSelectedPatientReply] = useState<string | null>(null);
-  const [replyInput, setReplyInput] = useState('YES');
 
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Calculations
   const totalPatients = patients.length;
   const overduePatients = patients.filter((p) => p.status === 'overdue');
-  const pendingPatients = patients.filter((p) => p.status === 'pending');
   const confirmedPatients = patients.filter((p) => p.status === 'confirmed');
 
   // Reminders today
@@ -88,23 +85,6 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
     });
   };
 
-  // Simulate patient SMS/WhatsApp reply
-  const handleSimulateReply = (patientId: string, patientName: string, customReply?: string) => {
-    setStatusMessage(null);
-    const textReply = customReply || replyInput;
-    startTransition(async () => {
-      try {
-        await simulatePatientReplyAction(patientId, textReply);
-        setStatusMessage({
-          text: `Incoming message simulated from ${patientName}: "${textReply}". Database updated!`,
-          type: 'success'
-        });
-        setSelectedPatientReply(null);
-      } catch (err) {
-        setStatusMessage({ text: 'Failed to simulate incoming message.', type: 'error' });
-      }
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -259,152 +239,54 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
       {/* Main Sections (Overdue Refills & Active Timeline) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* Left 2 Columns: Overdue & Simulators */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Overdue Patients Panel */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center space-x-2">
-                <AlertTriangle className="h-5 w-5 text-danger" />
-                <h3 className="font-extrabold text-slate-900 text-base">Critical Overdue Refills</h3>
-              </div>
-              <span className="px-2.5 py-0.5 bg-red-100 text-danger rounded-full text-xs font-bold">
-                {overduePatients.length} Patients Overdue
-              </span>
+        {/* Left 2 Columns: Overdue Refills List */}
+        <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 flex flex-col h-[480px]">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 flex-shrink-0">
+            <div className="flex items-center space-x-2">
+              <AlertTriangle className="h-5 w-5 text-danger animate-pulse-soft" />
+              <h3 className="font-extrabold text-slate-900 text-base">Critical Overdue Refills</h3>
             </div>
-
-            {overduePatients.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <CheckCircle className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
-                <p className="text-sm font-semibold">Excellent! No patients are overdue for prescriptions today.</p>
-              </div>
-            ) : (
-              <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto pr-1">
-                {overduePatients.map((patient) => (
-                  <div key={patient.id} className="py-3.5 flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center space-x-2">
-                        <h4 className="font-bold text-slate-800 text-sm truncate">{patient.name}</h4>
-                        <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">{patient.reminder_channel}</span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1 truncate">{patient.medication_name}</p>
-                      <p className="text-[10px] text-danger font-bold uppercase tracking-wider mt-1">Refill Date passed: {patient.next_refill_date}</p>
-                    </div>
-
-                    <button
-                      onClick={() => handleSendManualReminder(patient.id, patient.name)}
-                      disabled={isPending}
-                      className="flex-shrink-0 px-3.5 py-1.5 text-xs font-bold text-white bg-danger hover:bg-danger-hover rounded-xl shadow-sm transition"
-                    >
-                      Notify Now
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
+            <span className="px-2.5 py-0.5 bg-red-100 text-danger rounded-full text-xs font-bold">
+              {overduePatients.length} Patients Overdue
+            </span>
           </div>
 
-          {/* Response Simulator Panel */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-4">
-              <div className="flex items-center space-x-2">
-                <Smartphone className="h-5 w-5 text-primary" />
-                <h3 className="font-extrabold text-slate-900 text-base">Patient Reply Webhook Simulator</h3>
-              </div>
-              <span className="px-2.5 py-0.5 bg-primary-light text-primary rounded-full text-xs font-bold">
-                Interactive Testing
-              </span>
+          {overduePatients.length === 0 ? (
+            <div className="flex-1 flex flex-col justify-center items-center text-slate-400 text-center p-6">
+              <CheckCircle className="h-12 w-12 text-emerald-500 mb-2" />
+              <p className="text-sm font-bold text-slate-800">Excellent Status</p>
+              <p className="text-xs text-slate-400 mt-1">All prescription refills are completely up to date for your clinic!</p>
             </div>
-
-            <p className="text-xs text-slate-500 mt-3 leading-relaxed">
-              When a patient responds <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">&quot;YES&quot;</code> or <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-primary-dark">&quot;CONFIRM&quot;</code> to our WhatsApp/SMS reminder, their status updates to <span className="text-emerald-600 font-bold">Confirmed</span> and their next refill calendar is automatically bumped forward by their refill frequency. Use the simulator below to play with this!
-            </p>
-
-            {pendingPatients.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 border border-dashed border-slate-200 rounded-2xl mt-4 bg-slate-50/50">
-                <Clock className="h-8 w-8 text-slate-400 mx-auto mb-2 animate-pulse-soft" />
-                <p className="text-xs font-semibold">No patients are currently in "Pending" status awaiting alerts.</p>
-                <p className="text-[10px] text-slate-400 mt-1">Click "Run Daily Refill Check" above to trigger pending notifications!</p>
-              </div>
-            ) : (
-              <div className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {/* Select Patient list */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">1. Select Pending Patient</label>
-                    <select
-                      value={selectedPatientReply || ''}
-                      onChange={(e) => setSelectedPatientReply(e.target.value)}
-                      className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-700"
-                    >
-                      <option value="" disabled>-- Choose pending patient --</option>
-                      {pendingPatients.map((p) => (
-                        <option key={p.id} value={p.id}>
-                          {p.name} ({p.medication_name.split(' ')[0]})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Message Input */}
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">2. Type message reply</label>
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        value={replyInput}
-                        onChange={(e) => setReplyInput(e.target.value)}
-                        placeholder="YES"
-                        className="flex-1 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 text-slate-800"
-                      />
-                      <button
-                        onClick={() => {
-                          const pat = pendingPatients.find(p => p.id === selectedPatientReply);
-                          if (pat) handleSimulateReply(pat.id, pat.name);
-                        }}
-                        disabled={!selectedPatientReply || isPending}
-                        className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl disabled:bg-slate-300 transition"
-                      >
-                        Send
-                      </button>
+          ) : (
+            <div className="flex-1 overflow-y-auto mt-4 pr-1 divide-y divide-slate-100 space-y-1">
+              {overduePatients.map((patient) => (
+                <div key={patient.id} className="py-3.5 flex items-center justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center space-x-2">
+                      <h4 className="font-bold text-slate-800 text-sm truncate">{patient.name}</h4>
+                      <span className="text-[9px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-wider">{patient.reminder_channel}</span>
                     </div>
+                    <p className="text-xs text-slate-500 mt-1 truncate">{patient.medication_name}</p>
+                    <p className="text-[10px] text-danger font-extrabold uppercase tracking-wider mt-1.5 flex items-center">
+                      <Clock className="h-3 w-3 mr-1" /> Due Date Passed: {patient.next_refill_date}
+                    </p>
                   </div>
+
+                  <button
+                    onClick={() => handleSendManualReminder(patient.id, patient.name)}
+                    disabled={isPending}
+                    className="flex-shrink-0 px-4 py-2 text-xs font-extrabold text-white bg-danger hover:bg-danger-hover rounded-xl shadow-sm transition"
+                  >
+                    Notify Now
+                  </button>
                 </div>
-
-                {/* Pre-fill Quick Buttons */}
-                {selectedPatientReply && (
-                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase mr-1">Quick Simulations:</span>
-                    <button
-                      onClick={() => {
-                        const pat = pendingPatients.find(p => p.id === selectedPatientReply);
-                        if (pat) handleSimulateReply(pat.id, pat.name, 'YES');
-                      }}
-                      disabled={isPending}
-                      className="px-3 py-1 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg text-xs font-bold border border-emerald-200/50 transition"
-                    >
-                      Simulate &quot;YES&quot; (Auto-Confirm & Reschedule!)
-                    </button>
-                    <button
-                      onClick={() => {
-                        const pat = pendingPatients.find(p => p.id === selectedPatientReply);
-                        if (pat) handleSimulateReply(pat.id, pat.name, 'Need more time');
-                      }}
-                      disabled={isPending}
-                      className="px-3 py-1 bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg text-xs font-bold transition"
-                    >
-                      Simulate custom response
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right 1 Column: Activity Feed */}
-        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 flex flex-col h-[525px]">
+        <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 flex flex-col h-[480px]">
           <div className="flex items-center space-x-2 border-b border-slate-100 pb-4 flex-shrink-0">
             <Clock className="h-5 w-5 text-indigo-500" />
             <h3 className="font-extrabold text-slate-900 text-base">Recent Patient Activity</h3>
