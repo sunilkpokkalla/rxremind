@@ -17,11 +17,14 @@ export default async function BillingPage({ searchParams }: PageProps) {
   }
 
   let clinic;
+  let patientCount = 0;
   try {
     clinic = await DBBroker.getClinicByOwner(session.id);
     if (!clinic) {
       redirect('/');
     }
+    const patients = await DBBroker.getPatients(clinic.id);
+    patientCount = patients.length;
   } catch (err) {
     console.error('Billing page database access denied:', err);
     redirect('/login?error=database_access_denied');
@@ -30,5 +33,5 @@ export default async function BillingPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
   const success = resolvedParams.success === 'true';
 
-  return <BillingClient clinic={clinic} showSuccessBanner={success} />;
+  return <BillingClient clinic={clinic} patientCount={patientCount} showSuccessBanner={success} />;
 }
