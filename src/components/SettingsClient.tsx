@@ -232,11 +232,14 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
               {/* Days before refill */}
               <div className="space-y-2 p-3.5 bg-slate-50 border border-slate-100 rounded-2xl">
                 <div className="flex justify-between items-center">
-                  <label htmlFor="reminder_days_before" className="text-sm font-bold text-slate-800">
+                  <label htmlFor="reminder_days_before" className="text-sm font-bold text-slate-800 flex items-center gap-1.5">
                     Outreach Dispatch Period
+                    {(clinic.plan === 'Starter' || clinic.plan === 'TestPlan') && (
+                      <span className="text-[10px] text-amber-600 font-bold bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100 flex items-center">🔒 Locked</span>
+                    )}
                   </label>
                   <span className="px-2.5 py-0.5 bg-primary-light text-primary font-bold text-xs rounded-full">
-                    {daysBefore} Days Before Refill
+                    {(clinic.plan === 'Starter' || clinic.plan === 'TestPlan') ? 3 : daysBefore} Days Before Refill
                   </span>
                 </div>
                 <p className="text-[11px] text-slate-500 leading-normal">
@@ -249,11 +252,17 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
                     type="range"
                     min="1"
                     max="14"
-                    value={daysBefore}
+                    value={(clinic.plan === 'Starter' || clinic.plan === 'TestPlan') ? 3 : daysBefore}
+                    disabled={clinic.plan === 'Starter' || clinic.plan === 'TestPlan'}
                     onChange={(e) => setDaysBefore(parseInt(e.target.value))}
-                    className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-primary focus:outline-none"
+                    className={`w-full h-1.5 rounded-lg appearance-none focus:outline-none ${(clinic.plan === 'Starter' || clinic.plan === 'TestPlan') ? 'bg-slate-200 cursor-not-allowed accent-slate-400' : 'bg-slate-200 cursor-pointer accent-primary'}`}
                   />
                 </div>
+                {(clinic.plan === 'Starter' || clinic.plan === 'TestPlan') && (
+                  <p className="text-[10px] text-amber-600 font-bold leading-normal mt-1.5 bg-amber-500/5 border border-amber-500/10 p-2 rounded-xl">
+                    🔒 Lock Notice: Starter & Test plans are locked to the default 3-day dispatch period. Upgrade your clinic to the Growth or Pro tier to fully customize when patient notifications fire.
+                  </p>
+                )}
               </div>
             </div>
 

@@ -259,7 +259,7 @@ export async function updateSettingsAction(clinicId: string, prevState: any, for
   const email = formData.get('email') as string;
   const phone = formData.get('phone') as string;
   const reminder_template = formData.get('reminder_template') as string;
-  const reminder_days_before = parseInt(formData.get('reminder_days_before') as string) || 3;
+  let reminder_days_before = parseInt(formData.get('reminder_days_before') as string) || 3;
   const auto_reminders = formData.get('auto_reminders') === 'true';
 
   if (!name) {
@@ -267,6 +267,11 @@ export async function updateSettingsAction(clinicId: string, prevState: any, for
   }
   if (!email) {
     return { success: false, error: 'Clinic email is required' };
+  }
+
+  const clinic = await DBBroker.getClinicById(clinicId);
+  if (clinic && (clinic.plan === 'Starter' || clinic.plan === 'TestPlan')) {
+    reminder_days_before = 3; // Force Starter and TestPlan default schedule restriction
   }
 
   await DBBroker.updateClinic(clinicId, {
@@ -335,6 +340,13 @@ export async function createPatientAction(prevState: any, formData: FormData) {
   const refill_frequency_days = parseInt(formData.get('refill_frequency_days') as string);
   const next_refill_date = formData.get('next_refill_date') as string;
   const reminder_channel = formData.get('reminder_channel') as 'WhatsApp' | 'SMS' | 'Email';
+
+  if ((clinic.plan === 'Starter' || clinic.plan === 'TestPlan') && reminder_channel !== 'Email') {
+    return { 
+      success: false, 
+      error: 'Premium Alert Lock: SMS and WhatsApp notifications are premium channels restricted to the Growth and Pro plans. Please select Email reminders or upgrade in the Billing tab!' 
+    };
+  }
 
   if (!name || !phone || !medication_name || !refill_frequency_days || !next_refill_date || !reminder_channel) {
     return { success: false, error: 'All fields marked with an asterisk are required' };
@@ -419,6 +431,13 @@ export async function importPatientsAction(patients: Array<{
     throw new Error(`Import Limit Exceeded: The Starter plan has a limit of 200 patients. Importing these records would bring your clinic to ${newCountAfterImport} patients. Please upgrade to the Growth or Pro plan in the Billing tab.`);
   } else if (clinic.plan === 'Growth' && newCountAfterImport > 800) {
     throw new Error(`Import Limit Exceeded: The Growth plan has a limit of 800 patients. Importing these records would bring your clinic to ${newCountAfterImport} patients. Please upgrade to the Pro plan in the Billing tab.`);
+  }
+
+  // Verify channels for plan restrictions
+  for (const patient of patients) {
+    if (clinic.plan === 'Starter' && patient.reminder_channel !== 'Email') {
+      throw new Error(`Premium Alert Lock: SMS and WhatsApp outreach channels are premium features restricted to the Growth and Pro plans. Patient "${patient.name}" uses "${patient.reminder_channel}". Please use Email reminders or upgrade in the Billing tab.`);
+    }
   }
 
   // Save each patient record to database
