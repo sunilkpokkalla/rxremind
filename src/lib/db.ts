@@ -657,7 +657,7 @@ export class DBBroker {
           let dispatchError = '';
           try {
             if (patient.reminder_channel === 'Email') {
-              const { sendSendGridEmail } = require('./sendgrid');
+              const { sendResendEmail } = require('./resend');
               const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://rxremind.us';
               const formattedHtml = `
                 <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 24px; color: #1e293b; background-color: #f8fafc; max-width: 580px; margin: 0 auto; border-radius: 12px; border: 1px solid #e2e8f0;">
@@ -677,7 +677,7 @@ export class DBBroker {
                   </div>
                 </div>
               `;
-              const res = await sendSendGridEmail(
+              const res = await sendResendEmail(
                 patient.email, 
                 `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
                 formattedHtml, 
@@ -685,7 +685,7 @@ export class DBBroker {
                 clinic.name
               );
               dispatchSuccess = res.success;
-              if (!res.success) dispatchError = res.error || 'SendGrid rejected the request';
+              if (!res.success) dispatchError = res.error || 'Resend rejected the request';
             } else {
               const { sendTwilioSMS } = require('./twilio');
               const res = await sendTwilioSMS(patient.phone, msg);
