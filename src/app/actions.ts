@@ -55,13 +55,24 @@ export async function signUpAction(prevState: any, formData: FormData) {
     return { success: false, error: captcha.error };
   }
 
-  const result = await AuthManager.signUp(email, password, clinicName, clinicPhone);
+  try {
+    const result = await AuthManager.signUp(email, password, clinicName, clinicPhone);
 
-  if (result.success) {
-    revalidatePath('/');
-    redirect('/');
-  } else {
-    return { success: false, error: result.error || 'Registration failed' };
+    if (result.success) {
+      revalidatePath('/');
+      redirect('/');
+    } else {
+      return { success: false, error: result.error || 'Registration failed' };
+    }
+  } catch (err: any) {
+    if (err && err.digest && err.digest.startsWith('NEXT_REDIRECT')) {
+      throw err;
+    }
+    console.error('Sign up registration crash:', err);
+    return { 
+      success: false, 
+      error: err.message || 'An unexpected registration error occurred. Please verify your SUPABASE_SERVICE_KEY is configured in your Cloudflare dashboard!' 
+    };
   }
 }
 

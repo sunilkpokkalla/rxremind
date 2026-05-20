@@ -411,9 +411,12 @@ export class DBBroker {
       const adminClient = createSupabaseAdmin();
       const supabase = adminClient || (await getSupabaseClient());
 
+      // Safely strip optional fields that are not columns in the Supabase 'clinics' table
+      const { subscription_active, ...dbClinic } = clinic as any;
+
       const { data, error } = await supabase
         .from('clinics')
-        .insert([clinic])
+        .insert([dbClinic])
         .select()
         .single();
       if (error) throw error;
