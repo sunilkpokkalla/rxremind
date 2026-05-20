@@ -16,8 +16,9 @@ import { Clinic } from '@/lib/db';
 interface SettingsClientProps {
   clinic: Clinic;
   gatewayStatus: {
-    resend: {
+    email: {
       configured: boolean;
+      driver: string;
       apiKeyMasked: string | null;
     };
     twilio: {
@@ -345,20 +346,20 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
             </h3>
             
             <div className="space-y-3">
-              {/* Resend Card */}
+              {/* Email Gateway Card */}
               <div className="p-3.5 rounded-2xl border border-slate-100 bg-slate-50 flex items-start space-x-3">
-                <div className={`mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0 ${gatewayStatus.resend.configured ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+                <div className={`mt-1 h-2.5 w-2.5 rounded-full flex-shrink-0 ${gatewayStatus.email.configured ? 'bg-emerald-500' : 'bg-rose-500'}`} />
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold text-slate-800">Resend Email Gateway</span>
-                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${gatewayStatus.resend.configured ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
-                      {gatewayStatus.resend.configured ? 'Active' : 'Missing'}
+                    <span className="text-xs font-bold text-slate-800">Email Delivery Gateway</span>
+                    <span className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-wide ${gatewayStatus.email.configured ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {gatewayStatus.email.configured ? 'Active' : 'Missing'}
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-500 mt-1 leading-normal">
-                    {gatewayStatus.resend.configured 
-                      ? `Connected successfully! Active API Key: ${gatewayStatus.resend.apiKeyMasked}`
-                      : '🔴 Patient emails will not send. To activate, add your RESEND_API_KEY to your wrangler.jsonc or Cloudflare Pages env settings!'
+                    {gatewayStatus.email.configured 
+                      ? `Connected via ${gatewayStatus.email.driver}! Active API Key: ${gatewayStatus.email.apiKeyMasked}`
+                      : '🔴 Patient emails will not send. To activate, add either RESEND_API_KEY or SENDGRID_API_KEY to your wrangler.jsonc or Cloudflare Pages env settings!'
                     }
                   </p>
                 </div>
