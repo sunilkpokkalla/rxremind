@@ -88,24 +88,25 @@ export default function DashboardClient({ clinic, patients, reminders }: Dashboa
 
   return (
     <div className="space-y-6">
-      {/* Premium Subscription Inactive Notice Bar */}
+      {/* Premium Subscription Inactive Notice Bar (Ultra-thin & Single-Line layout) */}
       {!clinic.subscription_active && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/60 rounded-2xl p-3 sm:px-4 sm:py-3 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm animate-in fade-in-50 duration-300">
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/80 rounded-2xl p-3 px-4.5 flex items-center justify-between gap-4 shadow-sm animate-in fade-in-50 duration-300">
           <div className="flex items-center space-x-2.5 min-w-0">
-            <span className="flex-shrink-0 flex items-center justify-center h-5 px-2 text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-200 rounded-md">
-              Sandbox
-            </span>
-            <p className="text-xs text-amber-900 font-semibold leading-relaxed truncate md:whitespace-normal">
-              {totalPatients >= 1 ? (
-                `Successfully enrolled 1 test patient (${patients[0]?.name || 'Patient'}). Unlock unlimited profiles, manual spreadsheet uploads, and automated daily sweeps by upgrading your plan.`
-              ) : (
-                "Active sandbox test mode (1 patient limit). Activate your plan to upload spreadsheets, enable sweeps, and add unlimited patient records."
-              )}
+            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse-soft flex-shrink-0" />
+            <p className="text-xs text-slate-600 truncate font-semibold">
+              <span className="font-extrabold text-amber-950">
+                {totalPatients >= 1 ? 'Free Test Patient Enrolled! ' : 'Active Free Test Mode. '}
+              </span>
+              <span className="hidden md:inline font-medium text-slate-500">
+                {totalPatients >= 1 
+                  ? `Successfully testing reminders with ${patients[0]?.name || 'Patient'}. Upgrade to a clinic plan to bulk import spreadsheets and automate daily alerts!`
+                  : 'Get started by adding a patient to test manual reminders. Upgrade to activate bulk spreadsheet imports and WhatsApp outreach!'}
+              </span>
             </p>
           </div>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-lg shadow-sm shadow-amber-600/10 transition flex-shrink-0 cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-xl shadow-sm transition flex-shrink-0 cursor-pointer"
           >
             Upgrade Plan
             <ArrowRight className="ml-1 h-3 w-3" />
