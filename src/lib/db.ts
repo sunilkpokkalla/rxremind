@@ -21,7 +21,7 @@ export interface Clinic {
   email: string;
   phone: string;
   logo_url: string;
-  plan: 'Starter' | 'Growth' | 'Pro';
+  plan: 'TestPlan' | 'Starter' | 'Growth' | 'Pro';
   subscription_active?: boolean;
   reminder_days_before: number;
   auto_reminders: boolean;
@@ -374,7 +374,7 @@ export class DBBroker {
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+        data.subscription_active = data.plan !== 'TestPlan';
       }
       return data;
     } else {
@@ -395,7 +395,7 @@ export class DBBroker {
         .maybeSingle();
       if (error) throw error;
       if (data) {
-        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+        data.subscription_active = data.plan !== 'TestPlan';
       }
       return data;
     } else {
@@ -427,7 +427,7 @@ export class DBBroker {
         .single();
       if (error) throw error;
       if (data) {
-        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+        data.subscription_active = data.plan !== 'TestPlan';
       }
       return data;
     } else {
@@ -450,7 +450,7 @@ export class DBBroker {
         .single();
       if (error) throw error;
       if (data) {
-        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+        data.subscription_active = data.plan !== 'TestPlan';
       }
       return data;
     } else {

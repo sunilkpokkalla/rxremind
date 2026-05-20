@@ -22,7 +22,7 @@ interface BillingClientProps {
 
 export default function BillingClient({ clinic, showSuccessBanner = false }: BillingClientProps) {
   const [isPending, startTransition] = useTransition();
-  const [checkoutPlan, setCheckoutPlan] = useState<'Starter' | 'Growth' | 'Pro' | null>(null);
+  const [checkoutPlan, setCheckoutPlan] = useState<'TestPlan' | 'Starter' | 'Growth' | 'Pro' | null>(null);
   const [checkoutStep, setCheckoutStep] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -77,7 +77,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
   ];
 
   // Stripe Checkout production redirect pipeline
-  const handleUpgradeClick = async (planName: 'Starter' | 'Growth' | 'Pro') => {
+  const handleUpgradeClick = async (planName: 'TestPlan' | 'Starter' | 'Growth' | 'Pro') => {
     if (clinic.plan === planName && clinic.subscription_active) return;
 
     setCheckoutPlan(planName);
@@ -170,14 +170,16 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-2">
-            <span className="px-3 py-1 bg-white/10 rounded-full text-[10px] font-bold text-primary-light uppercase tracking-wider">
-              {clinic.subscription_active ? 'Current Billing Account' : 'Inactive / Sandbox Test Mode'}
+            <span className="px-3 py-1 bg-amber-500/20 rounded-full text-[10px] font-bold text-amber-400 uppercase tracking-wider">
+              {clinic.plan === 'TestPlan' ? 'Free Demo Test Account' : clinic.subscription_active ? 'Current Billing Account' : 'Inactive / Sandbox Test Mode'}
             </span>
             <h2 className="text-3xl font-extrabold tracking-tight">
-              {clinic.subscription_active ? `${clinic.plan} Plan` : 'No Active Subscription'}
+              {clinic.plan === 'TestPlan' ? 'Sandbox Test Plan' : clinic.subscription_active ? `${clinic.plan} Plan` : 'No Active Subscription'}
             </h2>
             <p className="text-xs text-slate-400">
-              {clinic.subscription_active ? (
+              {clinic.plan === 'TestPlan' ? (
+                <>Status: <span className="font-semibold text-amber-400">1 Test Patient Limit (Email Verification Enabled)</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
+              ) : clinic.subscription_active ? (
                 <>Billing Date: <span className="font-semibold text-slate-300">Monthly, renews on the 1st</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
               ) : (
                 <>Status: <span className="font-semibold text-amber-400">Outreach Restricted (1 test patient sandbox limit)</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>

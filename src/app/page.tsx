@@ -28,7 +28,7 @@ export default async function DashboardPage() {
         email: session.email,
         phone: '',
         logo_url: '',
-        plan: 'Pro',
+        plan: 'TestPlan',
         subscription_active: false,
         reminder_days_before: 3,
         auto_reminders: true,

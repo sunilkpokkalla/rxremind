@@ -10,7 +10,7 @@ export async function POST(req: Request) {
     }
 
     const { planName } = await req.json();
-    if (!planName || !['Starter', 'Growth', 'Pro'].includes(planName)) {
+    if (!planName || !['TestPlan', 'Starter', 'Growth', 'Pro'].includes(planName)) {
       return NextResponse.json({ error: 'Invalid plan selected' }, { status: 400 });
     }
 
