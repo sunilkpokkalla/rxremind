@@ -171,10 +171,10 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-2">
             <span className="px-3 py-1 bg-amber-500/20 rounded-full text-[10px] font-bold text-amber-400 uppercase tracking-wider">
-              {clinic.plan === 'TestPlan' ? 'Free Demo Test Account' : clinic.subscription_active ? 'Current Billing Account' : 'Inactive / Sandbox Test Mode'}
+              {clinic.plan === 'TestPlan' ? 'Free Demo Test Account' : clinic.subscription_active ? 'Current Billing Account' : 'Inactive / Free Test Mode'}
             </span>
             <h2 className="text-3xl font-extrabold tracking-tight">
-              {clinic.plan === 'TestPlan' ? 'Sandbox Test Plan' : clinic.subscription_active ? `${clinic.plan} Plan` : 'No Active Subscription'}
+              {clinic.plan === 'TestPlan' ? 'Free Test Plan' : clinic.subscription_active ? `${clinic.plan} Plan` : 'No Active Subscription'}
             </h2>
             <p className="text-xs text-slate-400">
               {clinic.plan === 'TestPlan' ? (
@@ -182,7 +182,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
               ) : clinic.subscription_active ? (
                 <>Billing Date: <span className="font-semibold text-slate-300">Monthly, renews on the 1st</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
               ) : (
-                <>Status: <span className="font-semibold text-amber-400">Outreach Restricted (1 test patient sandbox limit)</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
+                <>Status: <span className="font-semibold text-amber-400">Outreach Restricted (1 test patient limit)</span> • Registered Email: <span className="font-semibold text-slate-300">{clinic.email}</span></>
               )}
             </p>
           </div>

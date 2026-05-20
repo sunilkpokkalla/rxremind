@@ -304,32 +304,28 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
 
   return (
     <div className="space-y-6">
-      {/* Premium Subscription Inactive Notice Bar */}
+      {/* Premium Subscription Inactive Notice Bar (Ultra-thin & Single-Line layout) */}
       {!clinic.subscription_active && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-3xl p-5 sm:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm animate-in fade-in-50 duration-300">
-          <div className="flex items-start space-x-3.5">
-            <div className="h-10 w-10 rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center flex-shrink-0 shadow-sm">
-              <AlertTriangle className="h-5 w-5 animate-pulse-soft" />
-            </div>
-            <div className="text-xs">
-              <span className="font-extrabold text-amber-950 block text-sm">
-                {patients.length >= 1 ? 'Free Test Patient Enrolled' : 'Active Free Test Mode'}
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50/50 border border-amber-200/80 rounded-2xl p-3 px-4.5 flex items-center justify-between gap-4 shadow-sm animate-in fade-in-50 duration-300">
+          <div className="flex items-center space-x-2.5 min-w-0">
+            <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse-soft flex-shrink-0" />
+            <p className="text-xs text-slate-600 truncate font-semibold">
+              <span className="font-extrabold text-amber-950">
+                {patients.length >= 1 ? 'Free Test Patient Enrolled! ' : 'Active Free Test Mode. '}
               </span>
-              <p className="text-slate-600 mt-1 leading-relaxed max-w-2xl font-medium">
-                {patients.length >= 1 ? (
-                  `You have successfully enrolled 1 test patient (${patients[0]?.name || 'Patient'}). You can test sending manual reminder dispatches to this patient. To enroll more patients, import Excel/CSV sheets, or trigger automatic sweeps, please activate a billing subscription plan!`
-                ) : (
-                  "You are in active sandbox test mode! You can add exactly 1 test patient and dispatch manual outreach notifications. To enroll more patients, perform bulk spreadsheet uploads, or enable automatic daily sweep notifications, please activate your plan."
-                )}
-              </p>
-            </div>
+              <span className="hidden md:inline font-medium text-slate-500">
+                {patients.length >= 1 
+                  ? `Successfully testing reminders with ${patients[0]?.name || 'Patient'}. Upgrade to a clinic plan to bulk import spreadsheets and automate daily alerts!`
+                  : 'Get started by adding a patient to test manual reminders. Upgrade to activate bulk spreadsheet imports and WhatsApp outreach!'}
+              </span>
+            </p>
           </div>
           <Link
             href="/billing"
-            className="inline-flex items-center justify-center px-5 py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-md shadow-amber-600/10 transition flex-shrink-0 cursor-pointer"
+            className="inline-flex items-center justify-center px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] rounded-xl shadow-sm transition flex-shrink-0 cursor-pointer"
           >
-            Activate Subscription Plan
-            <svg className="ml-1.5 h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            Upgrade Plan
+            <svg className="ml-1 h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
             </svg>
           </Link>

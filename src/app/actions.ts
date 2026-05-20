@@ -183,7 +183,7 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
     if (clinic.plan === 'TestPlan') {
       const existingPatients = await DBBroker.getPatients(clinic.id);
       if (existingPatients.length > 1) {
-        return { success: false, error: 'Test Plan Limit Exceeded: The Sandbox Test Plan only supports sending alerts to 1 patient. Please upgrade to Pro in the Billing tab!' };
+        return { success: false, error: 'Test Plan Limit Exceeded: The Free Test Plan only supports sending alerts to 1 patient. Please upgrade to Pro in the Billing tab!' };
       }
     }
 
@@ -319,7 +319,7 @@ export async function createPatientAction(prevState: any, formData: FormData) {
   if (clinic.plan === 'TestPlan' && currentCount >= 1) {
     return { 
       success: false, 
-      error: 'Demo Limit Exceeded: The Sandbox Test Plan only allows enrolling 1 test patient to preview outreach templates. Please go to the Billing tab to upgrade your clinic plan!' 
+      error: 'Demo Limit Exceeded: The Free Test Plan only allows enrolling 1 test patient to preview outreach templates. Please go to the Billing tab to upgrade your clinic plan!' 
     };
   } else if (clinic.plan === 'Starter' && currentCount >= 200) {
     return { 
@@ -426,7 +426,7 @@ export async function importPatientsAction(patients: Array<{
   const newCountAfterImport = currentCount + patients.length;
 
   if (clinic.plan === 'TestPlan') {
-    throw new Error('Bulk importing is disabled on the Sandbox Test Plan. Please upgrade your clinic account to the Pro Plan in the Billing tab.');
+    throw new Error('Bulk importing is disabled on the Free Test Plan. Please upgrade your clinic account to the Pro Plan in the Billing tab.');
   } else if (clinic.plan === 'Starter' && newCountAfterImport > 200) {
     throw new Error(`Import Limit Exceeded: The Starter plan has a limit of 200 patients. Importing these records would bring your clinic to ${newCountAfterImport} patients. Please upgrade to the Growth or Pro plan in the Billing tab.`);
   } else if (clinic.plan === 'Growth' && newCountAfterImport > 800) {
