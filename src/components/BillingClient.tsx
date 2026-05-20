@@ -169,13 +169,22 @@ export default function BillingClient({ clinic, patientCount, showSuccessBanner 
         </div>
       )}
 
-      {/* Page Header */}
-      <div className="border-b border-slate-100 pb-5">
-        <span className="text-[10px] text-primary font-bold uppercase tracking-wider font-sans">Subscription Management</span>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight mt-0.5">Clinic Billing & Plans</h1>
-        <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
-          Unlock standard email reminders, custom WhatsApp workflows, and lift sandbox capacity limits.
-        </p>
+      {/* Page Header (Matched exactly to Dashboard Client layout) */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between p-6 bg-white rounded-3xl border border-slate-200/80 shadow-sm gap-4">
+        <div>
+          <span className="text-[10px] text-primary font-bold uppercase tracking-wider">Subscription Management</span>
+          <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight mt-0.5">
+            Clinic Billing & Plans
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Unlock standard email reminders, custom WhatsApp workflows, and lift sandbox capacity limits.
+          </p>
+        </div>
+        
+        <div className="flex items-center space-x-2.5 bg-emerald-50 border border-emerald-100/30 px-4 py-2.5 rounded-xl self-start lg:self-auto shadow-sm">
+          <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse-soft" />
+          <span className="text-[10px] font-black text-emerald-800 uppercase tracking-wider">Stripe Merchant API Online</span>
+        </div>
       </div>
 
       {/* State Notification */}
