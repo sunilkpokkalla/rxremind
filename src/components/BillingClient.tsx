@@ -162,8 +162,8 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
         </div>
       )}
 
-      {/* Current Plan Indicator Card (Upgraded from heavy dark blue to clinical brand teal-emerald) */}
-      <div className="p-6 bg-gradient-to-r from-primary via-teal-700 to-emerald-700 text-white rounded-3xl relative overflow-hidden shadow-xl">
+      {/* Current Plan Indicator Card (Aligned with core Blue Dashboard theme) */}
+      <div className="p-6 bg-gradient-to-r from-primary via-blue-600 to-indigo-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
         {/* Background blobs */}
         <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[150%] rounded-full bg-white/10 filter blur-3xl" />
         <div className="absolute bottom-[-50%] left-[-10%] w-[30%] h-[100%] rounded-full bg-white/5 filter blur-3xl" />
@@ -245,8 +245,8 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
                     isCurrent
                       ? 'bg-slate-100 text-slate-400 cursor-default'
                       : plan.popular
-                      ? 'bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/10 shadow-emerald-500/10'
-                      : 'bg-teal-50 text-primary border border-teal-200/50 hover:bg-teal-100/80 hover:text-primary-hover'
+                      ? 'bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/10 shadow-blue-500/10'
+                      : 'bg-blue-50 text-primary border border-blue-200/50 hover:bg-blue-100/80 hover:text-primary-hover'
                   }`}
                 >
                   {isCurrent 
