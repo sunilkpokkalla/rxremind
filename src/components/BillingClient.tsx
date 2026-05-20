@@ -77,7 +77,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
 
   // Stripe Checkout production redirect pipeline
   const handleUpgradeClick = async (planName: 'Starter' | 'Growth' | 'Pro') => {
-    if (clinic.plan === planName) return;
+    if (clinic.plan === planName && clinic.subscription_active) return;
 
     setCheckoutPlan(planName);
     setCheckoutStep(0); // Connecting to secure API
