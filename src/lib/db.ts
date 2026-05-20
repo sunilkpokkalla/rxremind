@@ -373,6 +373,9 @@ export class DBBroker {
         .eq('owner_id', ownerId)
         .maybeSingle();
       if (error) throw error;
+      if (data) {
+        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+      }
       return data;
     } else {
       const db = readLocalDB();
@@ -391,6 +394,9 @@ export class DBBroker {
         .eq('id', id)
         .maybeSingle();
       if (error) throw error;
+      if (data) {
+        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+      }
       return data;
     } else {
       const db = readLocalDB();
@@ -420,6 +426,9 @@ export class DBBroker {
         .select()
         .single();
       if (error) throw error;
+      if (data) {
+        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+      }
       return data;
     } else {
       const db = readLocalDB();
@@ -440,6 +449,9 @@ export class DBBroker {
         .select()
         .single();
       if (error) throw error;
+      if (data) {
+        data.subscription_active = true; // Auto-activate in Supabase mode for clinical presentation demo
+      }
       return data;
     } else {
       const db = readLocalDB();
