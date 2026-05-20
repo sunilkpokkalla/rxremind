@@ -336,7 +336,7 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
         </div>
 
         {/* Right 2 Columns: Diagnostics + Smartphone Live WhatsApp Mock Simulator */}
-        <div className="lg:col-span-2 flex flex-col items-stretch justify-start space-y-6 lg:pt-8">
+        <div className="lg:col-span-2 flex flex-col items-stretch justify-start space-y-6">
           
           {/* Diagnostics Card */}
           <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm p-6 space-y-4">
