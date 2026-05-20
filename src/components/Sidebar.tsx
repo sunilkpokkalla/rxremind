@@ -124,7 +124,7 @@ export default function Sidebar({ clinicName, userEmail, onSignOut }: SidebarPro
             {/* Clinic Info */}
             <div className="px-5 py-4 bg-slate-50 border-b border-slate-100">
               <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Clinic</div>
-              <div className="font-semibold text-slate-800 truncate mt-0.5">{clinicName}</div>
+              <div className="font-bold text-sm text-slate-900 break-words mt-1">{clinicName}</div>
             </div>
 
             {/* Links */}
@@ -177,7 +177,7 @@ export default function Sidebar({ clinicName, userEmail, onSignOut }: SidebarPro
             </div>
             <div className="min-w-0 flex-1">
               <span className="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Active Clinic</span>
-              <p className="font-semibold text-xs text-slate-800 truncate leading-none mt-1" title={clinicName}>
+              <p className="font-bold text-sm text-slate-900 break-words leading-tight mt-1" title={clinicName}>
                 {clinicName}
               </p>
             </div>
