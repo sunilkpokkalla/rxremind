@@ -47,7 +47,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
       price: '$99',
       limit: '800 patients limit',
       popular: true,
-      colorClass: 'border-primary ring-2 ring-primary/20 shadow-lg shadow-primary/5 hover:border-primary-hover scale-[1.02]',
+      colorClass: 'border-primary ring-2 ring-primary/20 shadow-lg shadow-primary/5 hover:border-primary-hover hover:scale-[1.01] transition-transform duration-200',
       buttonText: 'Upgrade to Growth',
       features: [
         'Up to 800 patient records',
@@ -126,7 +126,7 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Stripe Payment Success Alert */}
       {showSuccessBanner && (
         <div className="p-4 bg-emerald-50 border border-emerald-500/10 text-emerald-800 text-sm font-semibold rounded-2xl flex items-center space-x-3 animate-fade-in mb-6 shadow-sm">
@@ -162,11 +162,11 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
         </div>
       )}
 
-      {/* Current Plan Indicator Card */}
-      <div className="p-6 bg-slate-900 text-white rounded-3xl relative overflow-hidden shadow-xl">
+      {/* Current Plan Indicator Card (Upgraded from heavy dark blue to clinical brand teal-emerald) */}
+      <div className="p-6 bg-gradient-to-r from-primary via-teal-700 to-emerald-700 text-white rounded-3xl relative overflow-hidden shadow-xl">
         {/* Background blobs */}
-        <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[150%] rounded-full bg-primary/20 filter blur-3xl" />
-        <div className="absolute bottom-[-50%] left-[-10%] w-[30%] h-[100%] rounded-full bg-emerald-500/10 filter blur-3xl" />
+        <div className="absolute top-[-50%] right-[-10%] w-[50%] h-[150%] rounded-full bg-white/10 filter blur-3xl" />
+        <div className="absolute bottom-[-50%] left-[-10%] w-[30%] h-[100%] rounded-full bg-white/5 filter blur-3xl" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="space-y-2">
@@ -245,8 +245,8 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
                     isCurrent
                       ? 'bg-slate-100 text-slate-400 cursor-default'
                       : plan.popular
-                      ? 'bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/10'
-                      : 'bg-slate-900 text-white hover:bg-slate-800'
+                      ? 'bg-primary text-white hover:bg-primary-hover shadow-md shadow-primary/10 shadow-emerald-500/10'
+                      : 'bg-teal-50 text-primary border border-teal-200/50 hover:bg-teal-100/80 hover:text-primary-hover'
                   }`}
                 >
                   {isCurrent 
