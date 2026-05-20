@@ -691,7 +691,7 @@ export class DBBroker {
               if (!res.success) dispatchError = res.error || 'Resend rejected the request';
             } else {
               const { sendTwilioSMS } = require('./twilio');
-              const res = await sendTwilioSMS(patient.phone, msg);
+              const res = await sendTwilioSMS(patient.phone, msg, patient.reminder_channel);
               dispatchSuccess = res.success;
               if (!res.success) dispatchError = res.error || 'Twilio rejected the request';
             }

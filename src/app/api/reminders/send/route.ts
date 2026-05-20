@@ -69,7 +69,7 @@ export async function POST(request: Request) {
         `;
         await sendResendEmail(patient.email, `Prescription Refill Reminder from ${clinic.name} 🛡️`, formattedHtml);
       } else {
-        await sendTwilioSMS(patient.phone, msg);
+        await sendTwilioSMS(patient.phone, msg, patient.reminder_channel);
       }
     } catch (dispatchErr) {
       console.error('Physical dispatch failed:', dispatchErr);

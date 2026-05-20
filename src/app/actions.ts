@@ -239,9 +239,9 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
       }
     } else {
       const { sendTwilioSMS } = require('@/lib/twilio');
-      const dispatchResult = await sendTwilioSMS(patient.phone, msg);
+      const dispatchResult = await sendTwilioSMS(patient.phone, msg, patient.reminder_channel);
       if (!dispatchResult.success) {
-        return { success: false, error: dispatchResult.error || 'Twilio rejected the SMS request.' };
+        return { success: false, error: dispatchResult.error || 'Twilio rejected the message request.' };
       }
     }
 
