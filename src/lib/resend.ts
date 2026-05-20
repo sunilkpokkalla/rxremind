@@ -1,7 +1,7 @@
 /**
- * Resend REST API Email Dispatch Helper
+ * Edge-compatible Email Dispatch Helper (Dual-Driver: Resend and Twilio SendGrid)
  * Sends highly deliverable transaction emails natively via Fetch API.
- * Avoids extra NPM bundle size, optimal for Edge Runtimes like Cloudflare.
+ * Optimal for Edge Runtimes like Cloudflare Workers/Pages.
  */
 
 export async function sendResendEmail(
@@ -11,24 +11,66 @@ export async function sendResendEmail(
   fromOverride?: string,
   displayNameOverride?: string
 ): Promise<{ success: boolean; error?: string }> {
-  // Use the SUPABASE_SERVICE_KEY as a dynamic proxy or search for RESEND_API_KEY
-  const apiKey = process.env.RESEND_API_KEY || '';
+  const resendApiKey = process.env.RESEND_API_KEY || '';
+  const sendgridApiKey = process.env.SENDGRID_API_KEY || process.env.TWILIO_SENDGRID_API_KEY || '';
   
-  if (!apiKey) {
-    console.warn('Resend API key is not configured. Email dispatch skipped.');
-    return { success: false, error: 'RESEND_API_KEY not configured' };
+  if (!resendApiKey && !sendgridApiKey) {
+    console.warn('Neither Resend nor SendGrid API key is configured. Email dispatch skipped.');
+    return { success: false, error: 'Email gateway not configured. Please add either RESEND_API_KEY or SENDGRID_API_KEY to your Cloudflare environment variables!' };
   }
 
-  try {
-    const fromEmail = fromOverride || process.env.RESEND_FROM_EMAIL || 'noreply@rxremind.us';
-    const cleanFrom = fromEmail.includes('@') ? fromEmail : 'noreply@rxremind.us';
-    const displayName = displayNameOverride || 'RxRemind';
+  const fromEmail = fromOverride || process.env.RESEND_FROM_EMAIL || process.env.SENDGRID_FROM_EMAIL || 'noreply@rxremind.us';
+  const cleanFrom = fromEmail.includes('@') ? fromEmail : 'noreply@rxremind.us';
+  const displayName = displayNameOverride || 'RxRemind';
 
+  // --- TWILIO SENDGRID DRIVER ---
+  if (sendgridApiKey) {
+    try {
+      const response = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sendgridApiKey}`
+        },
+        body: JSON.stringify({
+          personalizations: [
+            {
+              to: [{ email: to }]
+            }
+          ],
+          from: { 
+            email: cleanFrom,
+            name: displayName
+          },
+          subject: subject,
+          content: [
+            {
+              type: 'text/html',
+              value: htmlContent
+            }
+          ]
+        })
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`SendGrid API responded with status ${response.status}: ${errText}`);
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to dispatch email via Twilio SendGrid API:', error);
+      return { success: false, error: error.message || 'Unknown SendGrid dispatch error' };
+    }
+  }
+
+  // --- RESEND DRIVER ---
+  try {
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`
+        'Authorization': `Bearer ${resendApiKey}`
       },
       body: JSON.stringify({
         from: `${displayName} <${cleanFrom}>`,
@@ -43,11 +85,10 @@ export async function sendResendEmail(
       throw new Error(`Resend API responded with status ${response.status}: ${errText}`);
     }
 
-    const data = await response.json();
     return { success: true };
 
   } catch (error: any) {
     console.error('Failed to dispatch email via Resend API:', error);
-    return { success: false, error: error.message || 'Unknown email dispatch error' };
+    return { success: false, error: error.message || 'Unknown Resend dispatch error' };
   }
 }
