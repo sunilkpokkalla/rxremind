@@ -15,7 +15,8 @@
     "NEXT_PUBLIC_STRIPE_PRICE_GROWTH": "price_1TZ159Rwpqr3y9eEgBwqUfMu",
     "NEXT_PUBLIC_STRIPE_PRICE_PRO": "price_1TZ15dRwpqr3y9eEUrAc6Yup",
     "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADROiE3Sw9ORY3R6",
-    "TWILIO_PHONE_NUMBER": "+18669837226"
+    "TWILIO_PHONE_NUMBER": "+18669837226",
+    "SENDGRID_FROM_EMAIL": "noreply@rxremind.us"
   },
   "assets": {
     "directory": ".open-next/assets",
