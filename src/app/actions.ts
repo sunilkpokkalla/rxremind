@@ -180,10 +180,10 @@ export async function sendSingleReminderAction(patientId: string): Promise<{ suc
     const clinic = await DBBroker.getClinicById(patient.clinic_id);
     if (!clinic) return { success: false, error: 'Clinic not found' };
 
-    if (!clinic.subscription_active) {
+    if (clinic.plan === 'TestPlan') {
       const existingPatients = await DBBroker.getPatients(clinic.id);
       if (existingPatients.length > 1) {
-        return { success: false, error: 'Subscription required. Please activate your clinic plan in the Billing tab to send reminders to multiple patients.' };
+        return { success: false, error: 'Test Plan Limit Exceeded: The Sandbox Test Plan only supports sending alerts to 1 patient. Please upgrade to Pro in the Billing tab!' };
       }
     }
 
@@ -308,11 +308,24 @@ export async function createPatientAction(prevState: any, formData: FormData) {
     return { success: false, error: 'Your clinic account could not be found. Please try logging out and logging back in.' };
   }
 
-  if (!clinic.subscription_active) {
-    const existingPatients = await DBBroker.getPatients(clinic.id);
-    if (existingPatients.length >= 1) {
-      return { success: false, error: 'Subscription required to enroll more than 1 patient. Please activate your clinic plan in the Billing tab.' };
-    }
+  const existingPatients = await DBBroker.getPatients(clinic.id);
+  const currentCount = existingPatients.length;
+
+  if (clinic.plan === 'TestPlan' && currentCount >= 1) {
+    return { 
+      success: false, 
+      error: 'Demo Limit Exceeded: The Sandbox Test Plan only allows enrolling 1 test patient to preview outreach templates. Please go to the Billing tab to upgrade your clinic plan!' 
+    };
+  } else if (clinic.plan === 'Starter' && currentCount >= 200) {
+    return { 
+      success: false, 
+      error: 'Plan Limit Exceeded: The Starter Tier has a limit of 200 patients. Please upgrade your clinic account to the Growth or Pro plan in the Billing tab to register more patients.' 
+    };
+  } else if (clinic.plan === 'Growth' && currentCount >= 800) {
+    return { 
+      success: false, 
+      error: 'Plan Limit Exceeded: The Growth Tier has a limit of 800 patients. Please upgrade your clinic account to the Pro plan in the Billing tab to register more patients.' 
+    };
   }
 
   const name = formData.get('name') as string;
@@ -396,8 +409,16 @@ export async function importPatientsAction(patients: Array<{
     throw new Error('Your clinic account could not be found. Please log in again.');
   }
 
-  if (!clinic.subscription_active) {
-    throw new Error('Bulk importing is disabled in test mode. Please activate your clinic plan in the Billing tab.');
+  const existingPatients = await DBBroker.getPatients(clinic.id);
+  const currentCount = existingPatients.length;
+  const newCountAfterImport = currentCount + patients.length;
+
+  if (clinic.plan === 'TestPlan') {
+    throw new Error('Bulk importing is disabled on the Sandbox Test Plan. Please upgrade your clinic account to the Pro Plan in the Billing tab.');
+  } else if (clinic.plan === 'Starter' && newCountAfterImport > 200) {
+    throw new Error(`Import Limit Exceeded: The Starter plan has a limit of 200 patients. Importing these records would bring your clinic to ${newCountAfterImport} patients. Please upgrade to the Growth or Pro plan in the Billing tab.`);
+  } else if (clinic.plan === 'Growth' && newCountAfterImport > 800) {
+    throw new Error(`Import Limit Exceeded: The Growth plan has a limit of 800 patients. Importing these records would bring your clinic to ${newCountAfterImport} patients. Please upgrade to the Pro plan in the Billing tab.`);
   }
 
   // Save each patient record to database
