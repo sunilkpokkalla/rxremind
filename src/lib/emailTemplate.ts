@@ -11,10 +11,10 @@ export function getProfessionalEmailTemplate(
 ): string {
   const primaryColor = '#2563eb'; // Sleek medical blue
   
-  // Renders dynamic image logo or a sleek visual clinic monogram fallback
+  // Renders dynamic image logo or a sleek visual clinic medical cross badge
   const logoHtml = logoUrl && logoUrl.trim() !== ''
     ? `<img src="${logoUrl.trim()}" alt="${clinicName}" style="max-height: 60px; max-width: 220px; object-fit: contain; display: block; margin: 0 auto 12px auto;" />`
-    : `<div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; background-color: #eff6ff; border-radius: 50%; color: ${primaryColor}; font-weight: 800; font-size: 24px; text-align: center; margin: 0 auto 12px auto;">${clinicName.charAt(0).toUpperCase()}</div>`;
+    : `<div style="display: inline-block; width: 56px; height: 56px; line-height: 54px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); border-radius: 16px; color: #ffffff; font-weight: 800; font-size: 26px; text-align: center; margin: 0 auto 12px auto; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">✚</div>`;
 
   return `
 <!DOCTYPE html>
@@ -60,10 +60,11 @@ export function getProfessionalEmailTemplate(
                 </tr>
               </table>
               
-              <!-- ALTERNATIVE TEXT LINK -->
-              <div style="font-size: 12px; color: #94a3b8; margin-top: 24px; word-break: break-all; line-height: 1.5;">
-                If the button above does not work, copy and paste this link into your browser: <br/>
-                <a href="${confirmUrl}" style="color: #2563eb; text-decoration: underline;">${confirmUrl}</a>
+              <!-- SECURE DOCK LINK FALLBACK -->
+              <div style="font-size: 11px; color: #64748b; margin-top: 28px; word-break: break-all; line-height: 1.6; padding: 14px; background-color: #f8fafc; border-radius: 10px; border: 1px dashed #e2e8f0; text-align: left;">
+                <span style="font-weight: 700; color: #334155; display: block; margin-bottom: 4px;">🛡️ Secure Refill Verification Link</span>
+                If the action button above does not load, copy and paste this unique link into your browser: <br/>
+                <a href="${confirmUrl}" style="color: #2563eb; text-decoration: underline; font-family: monospace; font-size: 10.5px; font-weight: 600;">${confirmUrl}</a>
               </div>
             </td>
           </tr>
