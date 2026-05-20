@@ -9,7 +9,8 @@ import {
   Lock,
   RefreshCw,
   Loader2,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react';
 import { Clinic } from '@/lib/db';
 import { upgradePlanAction } from '@/app/actions';
@@ -263,6 +264,15 @@ export default function BillingClient({ clinic, showSuccessBanner = false }: Bil
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-sm w-full p-6 sm:p-8 space-y-6 animate-zoomIn relative">
             
+            {/* Close Button */}
+            <button 
+              onClick={() => setCheckoutPlan(null)} 
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1.5 hover:bg-slate-100 rounded-lg"
+              aria-label="Close modal"
+            >
+              <X className="h-4 w-4" />
+            </button>
+
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-100 pb-4">
               <div className="flex items-center space-x-2">
