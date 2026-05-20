@@ -725,52 +725,123 @@ export class DBBroker {
 
   // Simulation support for patient incoming SMS replies
   static async simulatePatientReply(patientId: string, responseText: string): Promise<boolean> {
-    const db = readLocalDB();
-    const patientIdx = db.patients.findIndex((p) => p.id === patientId);
-    if (patientIdx === -1) return false;
+    if (isSupabaseEnabled) {
+      const { createSupabaseAdmin } = await import('./supabaseServer');
+      const adminClient = createSupabaseAdmin();
+      const supabase = adminClient || (await getSupabaseClient());
 
-    const patient = db.patients[patientIdx];
-    const uppercaseReply = responseText.toUpperCase().trim();
-    const isConfirmation = uppercaseReply === 'YES' || uppercaseReply === 'CONFIRM';
+      // 1. Fetch the patient
+      const { data: patient, error: patientErr } = await supabase
+        .from('patients')
+        .select('*')
+        .eq('id', patientId)
+        .single();
+      if (patientErr || !patient) return false;
 
-    // Update patient status to confirmed if they replied positive
-    if (isConfirmation) {
-      db.patients[patientIdx].status = 'confirmed';
-      // Auto-advance refill date by frequency
-      const oldRefillDate = new Date(patient.next_refill_date);
-      const newRefillDate = new Date(oldRefillDate);
-      newRefillDate.setDate(oldRefillDate.getDate() + patient.refill_frequency_days);
-      db.patients[patientIdx].next_refill_date = newRefillDate.toISOString().split('T')[0];
-    }
+      const uppercaseReply = responseText.toUpperCase().trim();
+      const isConfirmation = uppercaseReply === 'YES' || uppercaseReply === 'CONFIRM';
 
-    // Find the latest reminder for this patient and update it
-    const patientReminders = db.reminders
-      .filter((r) => r.patient_id === patientId)
-      .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+      // 2. If it's a confirmation reply, update the patient's status and advance the next refill date
+      if (isConfirmation) {
+        const oldRefillDate = new Date(patient.next_refill_date);
+        const newRefillDate = new Date(oldRefillDate);
+        newRefillDate.setDate(oldRefillDate.getDate() + patient.refill_frequency_days);
+        const nextRefillStr = newRefillDate.toISOString().split('T')[0];
 
-    if (patientReminders.length > 0) {
-      const latestReminderId = patientReminders[0].id;
-      const reminderIdx = db.reminders.findIndex((r) => r.id === latestReminderId);
-      if (reminderIdx !== -1) {
-        db.reminders[reminderIdx].response = responseText;
-        db.reminders[reminderIdx].status = isConfirmation ? 'confirmed' : 'sent';
+        const { error: updateErr } = await supabase
+          .from('patients')
+          .update({
+            status: 'confirmed',
+            next_refill_date: nextRefillStr
+          })
+          .eq('id', patientId);
+        if (updateErr) throw updateErr;
       }
-    } else {
-      // Create a mock reminder entry to log the incoming chat message
-      db.reminders.push({
-        id: `reminder-${Math.random().toString(36).substr(2, 9)}`,
-        patient_id: patient.id,
-        clinic_id: patient.clinic_id,
-        sent_at: new Date().toISOString(),
-        channel: patient.reminder_channel,
-        response: responseText,
-        status: isConfirmation ? 'confirmed' : 'sent',
-        message_body: `[INCOMING REPLY via ${patient.reminder_channel}]: "${responseText}"`,
-        created_at: new Date().toISOString(),
-      });
-    }
 
-    writeLocalDB(db);
-    return true;
+      // 3. Find the latest reminder for this patient
+      const { data: reminders, error: fetchRemindersErr } = await supabase
+        .from('reminders')
+        .select('*')
+        .eq('patient_id', patientId)
+        .order('sent_at', { ascending: false })
+        .limit(1);
+
+      if (!fetchRemindersErr && reminders && reminders.length > 0) {
+        // Update the latest reminder
+        const latestReminder = reminders[0];
+        const { error: reminderUpdateErr } = await supabase
+          .from('reminders')
+          .update({
+            response: responseText,
+            status: isConfirmation ? 'confirmed' : 'sent'
+          })
+          .eq('id', latestReminder.id);
+        if (reminderUpdateErr) throw reminderUpdateErr;
+      } else {
+        // Create a new log reminder entry
+        const { error: insertReminderErr } = await supabase
+          .from('reminders')
+          .insert([{
+            patient_id: patientId,
+            clinic_id: patient.clinic_id,
+            sent_at: new Date().toISOString(),
+            channel: patient.reminder_channel,
+            response: responseText,
+            status: isConfirmation ? 'confirmed' : 'sent',
+            message_body: `[INCOMING REPLY via ${patient.reminder_channel}]: "${responseText}"`,
+          }]);
+        if (insertReminderErr) throw insertReminderErr;
+      }
+
+      return true;
+    } else {
+      const db = readLocalDB();
+      const patientIdx = db.patients.findIndex((p) => p.id === patientId);
+      if (patientIdx === -1) return false;
+
+      const patient = db.patients[patientIdx];
+      const uppercaseReply = responseText.toUpperCase().trim();
+      const isConfirmation = uppercaseReply === 'YES' || uppercaseReply === 'CONFIRM';
+
+      // Update patient status to confirmed if they replied positive
+      if (isConfirmation) {
+        db.patients[patientIdx].status = 'confirmed';
+        // Auto-advance refill date by frequency
+        const oldRefillDate = new Date(patient.next_refill_date);
+        const newRefillDate = new Date(oldRefillDate);
+        newRefillDate.setDate(oldRefillDate.getDate() + patient.refill_frequency_days);
+        db.patients[patientIdx].next_refill_date = newRefillDate.toISOString().split('T')[0];
+      }
+
+      // Find the latest reminder for this patient and update it
+      const patientReminders = db.reminders
+        .filter((r) => r.patient_id === patientId)
+        .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime());
+
+      if (patientReminders.length > 0) {
+        const latestReminderId = patientReminders[0].id;
+        const reminderIdx = db.reminders.findIndex((r) => r.id === latestReminderId);
+        if (reminderIdx !== -1) {
+          db.reminders[reminderIdx].response = responseText;
+          db.reminders[reminderIdx].status = isConfirmation ? 'confirmed' : 'sent';
+        }
+      } else {
+        // Create a mock reminder entry to log the incoming chat message
+        db.reminders.push({
+          id: `reminder-${Math.random().toString(36).substr(2, 9)}`,
+          patient_id: patient.id,
+          clinic_id: patient.clinic_id,
+          sent_at: new Date().toISOString(),
+          channel: patient.reminder_channel,
+          response: responseText,
+          status: isConfirmation ? 'confirmed' : 'sent',
+          message_body: `[INCOMING REPLY via ${patient.reminder_channel}]: "${responseText}"`,
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      writeLocalDB(db);
+      return true;
+    }
   }
 }
