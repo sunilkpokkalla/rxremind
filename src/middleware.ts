@@ -19,6 +19,7 @@ export async function middleware(request: NextRequest) {
   // Let core API triggers bypass auth so cron jobs or webhook endpoints can function
   if (
     pathname.startsWith('/api/cron') ||
+    pathname.startsWith('/api/confirm') ||
     pathname.startsWith('/api/reminders/incoming') ||
     pathname.startsWith('/api/auth/callback') ||
     pathname.startsWith('/api/webhooks/stripe')
@@ -133,6 +134,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!api/cron|api/reminders/incoming|api/webhooks/stripe|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.webp).*)',
+    '/((?!api/cron|api/confirm|api/reminders/incoming|api/webhooks/stripe|_next/static|_next/image|favicon.ico|.*\\.png|.*\\.jpg|.*\\.svg|.*\\.webp).*)',
   ],
 };
