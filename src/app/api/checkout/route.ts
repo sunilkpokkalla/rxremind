@@ -16,15 +16,17 @@ export async function POST(req: Request) {
 
     const origin = req.headers.get('origin') || 'https://rxremind.us';
 
-    // 1. Sandbox Simulation Fallback
-    // If Stripe API secret keys are placeholders or not configured, auto-approve the subscription immediately!
+    // 1. Demo Walkthrough / Sandbox Simulation Fallback
+    // If the active user is the demo account, or if Stripe API secret keys are placeholders/not configured,
+    // auto-approve the subscription immediately in the local sandbox database!
+    const isDemo = session.email === 'owner@rxremind-demo.com' || session.clinicId === 'demo-clinic-uuid-12345';
     const isStripeConfigured = 
       process.env.STRIPE_SECRET_KEY && 
       !process.env.STRIPE_SECRET_KEY.includes('placeholder') && 
       !process.env.STRIPE_SECRET_KEY.includes('bypass');
 
-    if (!isStripeConfigured) {
-      console.warn(`[SANDBOX MODE] Stripe keys are not configured. Simulating successful checkout for plan: ${planName}`);
+    if (isDemo || !isStripeConfigured) {
+      console.warn(`[SANDBOX/DEMO MODE] Simulating successful checkout for plan: ${planName}`);
       
       const { DBBroker } = require('@/lib/db');
       await DBBroker.updateClinic(session.clinicId, {
