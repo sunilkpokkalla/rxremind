@@ -24,9 +24,8 @@ export class AuthManager {
   static async signIn(email: string, password?: string): Promise<{ success: boolean; error?: string; session?: UserSession }> {
     const cleanEmail = email.toLowerCase().trim();
 
-    // Bypass Supabase and allow instant demo walkthrough on live site (development/staging only)
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (!isProduction && cleanEmail === 'owner@rxremind-demo.com') {
+    // Bypass Supabase and allow instant demo walkthrough on live site
+    if (cleanEmail === 'owner@rxremind-demo.com') {
       const session: UserSession = {
         id: 'demo-owner-uuid-12345',
         email: 'owner@rxremind-demo.com',
@@ -275,9 +274,8 @@ export class AuthManager {
     const cookieStore = await cookies();
     const sessionCookie = cookieStore.get(SESSION_COOKIE_NAME);
 
-    // Gracefully bypass Supabase validation for the mock demo account to allow instant walkthrough (non-production only)
-    const isProduction = process.env.NODE_ENV === 'production';
-    if (!isProduction && sessionCookie) {
+    // Gracefully bypass Supabase validation for the mock demo account to allow instant walkthrough
+    if (sessionCookie) {
       try {
         const decodedValue = decodeURIComponent(sessionCookie.value);
         const session = JSON.parse(decodedValue) as UserSession;

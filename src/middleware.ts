@@ -90,10 +90,10 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  // Gracefully bypass Supabase validation for the mock demo account to guarantee it works instantly (development/staging only)
+  // Gracefully bypass Supabase validation for the mock demo account to guarantee it works instantly
   const isProduction = process.env.NODE_ENV === 'production';
   let isDemoSession = false;
-  if (!isProduction && customSession?.value) {
+  if (customSession?.value) {
     try {
       const decodedValue = decodeURIComponent(customSession.value);
       const sessionObj = JSON.parse(decodedValue);
