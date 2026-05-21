@@ -93,11 +93,11 @@ export async function POST(request: Request) {
 
     // 3. Find matching patient across all clinics
     // Grab all clinics, fetch all patients in the system
-    const clinics = await DBBroker.getAllClinics();
+    const clinics = await DBBroker.getAllClinics(true);
     let matchedPatient = null;
 
     for (const clinic of clinics) {
-      const patients = await DBBroker.getPatients(clinic.id);
+      const patients = await DBBroker.getPatients(clinic.id, true);
       const found = patients.find((p) => cleanPhoneStr(p.phone) === searchPhone);
       if (found) {
         matchedPatient = found;

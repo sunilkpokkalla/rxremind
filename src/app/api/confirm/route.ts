@@ -15,7 +15,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const patient = await DBBroker.getPatientById(patientId);
+    const patient = await DBBroker.getPatientById(patientId, true);
     if (!patient) {
       return new Response(renderErrorHTML('No patient was found matching these credentials.'), {
         headers: { 'Content-Type': 'text/html' },
@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       });
     }
 
-    const clinic = await DBBroker.getClinicById(patient.clinic_id);
+    const clinic = await DBBroker.getClinicById(patient.clinic_id, true);
     const clinicName = clinic ? clinic.name : 'your clinic';
 
     // Auto-confirm and automatically schedule their next refill date in the DB!

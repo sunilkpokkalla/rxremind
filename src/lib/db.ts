@@ -349,9 +349,15 @@ export class DBBroker {
   }
 
   // CLINICS API
-  static async getAllClinics(): Promise<Clinic[]> {
+  static async getAllClinics(useAdmin = false): Promise<Clinic[]> {
     if (isSupabaseEnabled) {
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('clinics')
         .select('*');
@@ -384,10 +390,16 @@ export class DBBroker {
     }
   }
 
-  static async getClinicById(id: string): Promise<Clinic | null> {
+  static async getClinicById(id: string, useAdmin = false): Promise<Clinic | null> {
     if (isSupabaseEnabled && id !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(id)) return null;
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('clinics')
         .select('*')
@@ -475,10 +487,16 @@ export class DBBroker {
   }
 
   // PATIENTS API
-  static async getPatients(clinicId: string): Promise<Patient[]> {
+  static async getPatients(clinicId: string, useAdmin = false): Promise<Patient[]> {
     if (isSupabaseEnabled && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -515,9 +533,15 @@ export class DBBroker {
     }
   }
 
-  static async getPatientById(id: string): Promise<Patient | null> {
+  static async getPatientById(id: string, useAdmin = false): Promise<Patient | null> {
     if (isSupabaseEnabled && isValidUUID(id)) {
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('patients')
         .select('*')
@@ -556,9 +580,15 @@ export class DBBroker {
     }
   }
 
-  static async updatePatient(id: string, updates: Partial<Patient>): Promise<Patient> {
+  static async updatePatient(id: string, updates: Partial<Patient>, useAdmin = false): Promise<Patient> {
     if (isSupabaseEnabled && isValidUUID(id)) {
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('patients')
         .update(updates)
@@ -599,10 +629,16 @@ export class DBBroker {
   }
 
   // REMINDERS API
-  static async getReminders(clinicId: string): Promise<Reminder[]> {
+  static async getReminders(clinicId: string, useAdmin = false): Promise<Reminder[]> {
     if (isSupabaseEnabled && clinicId !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(clinicId)) return [];
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('reminders')
         .select('*')
@@ -618,7 +654,7 @@ export class DBBroker {
     }
   }
 
-  static async createReminder(reminder: Omit<Reminder, 'id' | 'created_at'>): Promise<Reminder> {
+  static async createReminder(reminder: Omit<Reminder, 'id' | 'created_at'>, useAdmin = false): Promise<Reminder> {
     const newReminder: Reminder = {
       ...reminder,
       id: `reminder-${Math.random().toString(36).substring(2, 9)}`,
@@ -626,7 +662,13 @@ export class DBBroker {
     };
 
     if (isSupabaseEnabled && reminder.clinic_id !== 'demo-clinic-uuid-12345') {
-      const supabase = await getSupabaseClient();
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
       const { data, error } = await supabase
         .from('reminders')
         .insert([reminder])
@@ -644,11 +686,11 @@ export class DBBroker {
 
   // TRIGGERS A DAILY REMINDER SCAN (CRON LOGIC)
   // Calculates next_refill_date = today + reminder_days_before
-  static async triggerReminderScan(clinicId: string): Promise<{ scanned: number; sent: number }> {
-    const clinic = await this.getClinicById(clinicId);
+  static async triggerReminderScan(clinicId: string, useAdmin = false): Promise<{ scanned: number; sent: number }> {
+    const clinic = await this.getClinicById(clinicId, useAdmin);
     if (!clinic) throw new Error('Clinic not found');
 
-    const patients = await this.getPatients(clinic.id);
+    const patients = await this.getPatients(clinic.id, useAdmin);
     const today = new Date();
     const targetDate = new Date();
     targetDate.setDate(today.getDate() + (clinic.reminder_days_before || 3));
@@ -663,7 +705,7 @@ export class DBBroker {
       // Also verify we haven't already sent a reminder today for this patient to prevent double-reminding!
       if (patient.next_refill_date === targetDateStr) {
         // Double-send check
-        const reminders = await this.getReminders(clinic.id);
+        const reminders = await this.getReminders(clinic.id, useAdmin);
         const alreadySentToday = reminders.some((r) => {
           const sentDate = new Date(r.sent_at).toISOString().split('T')[0];
           const todayStr = today.toISOString().split('T')[0];
@@ -724,11 +766,11 @@ export class DBBroker {
             response: dispatchSuccess ? null : `Physical send failed: ${dispatchError}`,
             status: dispatchSuccess ? 'sent' : 'failed',
             message_body: msg
-          });
+          }, useAdmin);
 
           if (dispatchSuccess) {
             // Mark patient status as pending (since reminder was sent and is awaiting reply)
-            await this.updatePatient(patient.id, { status: 'pending' });
+            await this.updatePatient(patient.id, { status: 'pending' }, useAdmin);
             sent++;
           }
         }

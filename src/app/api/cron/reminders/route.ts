@@ -19,14 +19,14 @@ export async function GET(request: Request) {
     }
 
     // 1. Load all registered clinics
-    const clinics = await DBBroker.getAllClinics();
+    const clinics = await DBBroker.getAllClinics(true);
     let totalScanned = 0;
     let totalSent = 0;
 
     // 2. Trigger daily scans for active clinics
     for (const clinic of clinics) {
       if (clinic.auto_reminders) {
-        const result = await DBBroker.triggerReminderScan(clinic.id);
+        const result = await DBBroker.triggerReminderScan(clinic.id, true);
         totalScanned += result.scanned;
         totalSent += result.sent;
       }
