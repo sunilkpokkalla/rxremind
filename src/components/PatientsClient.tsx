@@ -24,7 +24,7 @@ import {
   Sparkles
 } from 'lucide-react';
 import { Patient, Clinic } from '@/lib/db';
-import { deletePatientAction, sendSingleReminderAction, importPatientsAction } from '@/app/actions';
+import { deletePatientAction, sendSingleReminderAction, importPatientsAction, sendBatchRemindersAction, deleteBatchPatientsAction } from '@/app/actions';
 
 interface PatientsClientProps {
   clinic: Clinic;
@@ -37,6 +37,8 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
   const [isPending, startTransition] = useTransition();
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
 
   // CSV Importer States
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -103,6 +105,84 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
         setStatusMessage({ text: `Failed to notify ${name}: ${err.message || 'Unknown error'}`, type: 'error' });
       }
     });
+  };
+
+  // Checkbox multi-select helpers
+  const isAllSelected = filteredPatients.length > 0 && filteredPatients.every(p => selectedIds.includes(p.id));
+  
+  const handleSelectAllToggle = () => {
+    const filteredIds = filteredPatients.map(p => p.id);
+    if (isAllSelected) {
+      setSelectedIds(prev => prev.filter(id => !filteredIds.includes(id)));
+    } else {
+      setSelectedIds(prev => Array.from(new Set([...prev, ...filteredIds])));
+    }
+  };
+
+  const handleSelectRow = (id: string) => {
+    setSelectedIds(prev => 
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
+  // Batch Notify
+  const handleBatchNotify = () => {
+    if (selectedIds.length === 0) return;
+    setStatusMessage(null);
+    setIsBatchProcessing(true);
+    
+    startTransition(async () => {
+      try {
+        const res = await sendBatchRemindersAction(selectedIds);
+        if (res && !res.success) {
+          setStatusMessage({ text: res.error || 'Failed to dispatch batch reminders.', type: 'error' });
+        } else if (res) {
+          const { successCount, failCount, failures } = res;
+          if (failCount > 0) {
+            const failureDetails = failures.map(f => `${f.name}: ${f.error}`).join(', ');
+            setStatusMessage({ 
+              text: `Outreach completed with errors: Sent ${successCount} reminders. ${failCount} failed (${failureDetails}).`, 
+              type: 'error' 
+            });
+          } else {
+            setStatusMessage({ 
+              text: `Success: Bulk outreach alerts successfully dispatched to all ${successCount} selected patients! 🚀`, 
+              type: 'success' 
+            });
+            setSelectedIds([]); // clear selection
+          }
+        }
+      } catch (err: any) {
+        setStatusMessage({ text: `Batch outreach execution failed: ${err.message || 'Unknown error'}`, type: 'error' });
+      } finally {
+        setIsBatchProcessing(false);
+      }
+    });
+  };
+
+  // Batch Delete
+  const handleBatchDelete = () => {
+    if (selectedIds.length === 0) return;
+    if (confirm(`Are you absolutely sure you want to delete the ${selectedIds.length} selected patient records? This action is permanent and cannot be undone.`)) {
+      setStatusMessage(null);
+      setIsBatchProcessing(true);
+      
+      startTransition(async () => {
+        try {
+          const res = await deleteBatchPatientsAction(selectedIds);
+          if (res && !res.success) {
+            setStatusMessage({ text: res.error || 'Failed to delete selected patients.', type: 'error' });
+          } else {
+            setStatusMessage({ text: `Successfully removed ${selectedIds.length} patient records from your clinic database.`, type: 'success' });
+            setSelectedIds([]); // clear selection
+          }
+        } catch (err: any) {
+          setStatusMessage({ text: `Batch deletion failed: ${err.message || 'Unknown error'}`, type: 'error' });
+        } finally {
+          setIsBatchProcessing(false);
+        }
+      });
+    }
   };
 
   // Helper: Initial Avatar
@@ -433,6 +513,14 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
               <table className="min-w-full divide-y divide-slate-100 text-left">
                 <thead className="bg-slate-50 text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100">
                   <tr>
+                    <th scope="col" className="pl-6 pr-2 py-4 w-10">
+                      <input
+                        type="checkbox"
+                        checked={isAllSelected}
+                        onChange={handleSelectAllToggle}
+                        className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                      />
+                    </th>
                     <th scope="col" className="px-6 py-4">Patient Name</th>
                     <th scope="col" className="px-6 py-4">Prescribed Medication</th>
                     <th scope="col" className="px-6 py-4">Refill Schedule</th>
@@ -445,9 +533,18 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
                   {filteredPatients.map((patient) => {
                     const todayStr = new Date().toISOString().split('T')[0];
                     const isOverdue = patient.next_refill_date < todayStr && patient.status !== 'confirmed';
+                    const isSelected = selectedIds.includes(patient.id);
 
                     return (
-                      <tr key={patient.id} className="hover:bg-slate-50/50 transition duration-100 group">
+                      <tr key={patient.id} className={`hover:bg-slate-50/50 transition duration-100 group ${isSelected ? 'bg-primary/5 hover:bg-primary/5' : ''}`}>
+                        <td className="pl-6 pr-2 py-4 w-10">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => handleSelectRow(patient.id)}
+                            className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer"
+                          />
+                        </td>
                         {/* Name Column */}
                         <td className="whitespace-nowrap px-6 py-4">
                           <div className="flex items-center space-x-3">
@@ -522,9 +619,9 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
                             {/* Alert trigger */}
                             <button
                               onClick={() => handleNotifyNow(patient.id, patient.name)}
-                              disabled={isPending}
+                              disabled={isPending || isBatchProcessing}
                               title="Send Reminder Alert Now"
-                              className="p-1.5 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-lg transition"
+                              className="p-1.5 text-slate-500 hover:text-primary hover:bg-slate-100 rounded-lg transition disabled:opacity-50"
                             >
                               <Bell className="h-4 w-4" />
                             </button>
@@ -541,9 +638,9 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
                             {/* Delete Button */}
                             <button
                               onClick={() => handleDelete(patient.id, patient.name)}
-                              disabled={deletingId === patient.id}
+                              disabled={deletingId === patient.id || isBatchProcessing}
                               title="Delete Patient"
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition disabled:opacity-50"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -562,12 +659,19 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
             {filteredPatients.map((patient) => {
               const todayStr = new Date().toISOString().split('T')[0];
               const isOverdue = patient.next_refill_date < todayStr && patient.status !== 'confirmed';
+              const isSelected = selectedIds.includes(patient.id);
 
               return (
-                <div key={patient.id} className="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-sm space-y-3 relative">
+                <div key={patient.id} className={`bg-white border rounded-2xl p-4 shadow-sm space-y-3 relative transition duration-150 ${isSelected ? 'border-primary bg-primary/5 shadow-sm' : 'border-slate-200/80'}`}>
                   {/* Card Header */}
                   <div className="flex justify-between items-start">
                     <div className="flex items-center space-x-2.5">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => handleSelectRow(patient.id)}
+                        className="rounded border-slate-300 text-primary focus:ring-primary h-4 w-4 cursor-pointer mr-1"
+                      />
                       <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary font-bold text-xs flex items-center justify-center">
                         {getInitials(patient.name)}
                       </div>
@@ -613,8 +717,8 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
                   <div className="flex justify-between items-center pt-1.5">
                     <button
                       onClick={() => handleNotifyNow(patient.id, patient.name)}
-                      disabled={isPending}
-                      className="inline-flex items-center text-xs font-bold text-primary hover:opacity-80"
+                      disabled={isPending || isBatchProcessing}
+                      className="inline-flex items-center text-xs font-bold text-primary hover:opacity-80 disabled:opacity-50"
                     >
                       <Bell className="mr-1.5 h-3.5 w-3.5" />
                       Notify Patient
@@ -630,8 +734,8 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
                       </Link>
                       <button
                         onClick={() => handleDelete(patient.id, patient.name)}
-                        disabled={deletingId === patient.id}
-                        className="p-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 transition"
+                        disabled={deletingId === patient.id || isBatchProcessing}
+                        className="p-1.5 bg-red-50 hover:bg-red-100 rounded-lg text-red-600 transition disabled:opacity-50"
                         title="Delete Patient"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -642,6 +746,54 @@ export default function PatientsClient({ clinic, patients }: PatientsClientProps
               );
             })}
           </div>
+
+          {/* Premium Floating Glassmorphic Batch Action Bar */}
+          {selectedIds.length > 0 && (
+            <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-xl bg-white/90 backdrop-blur-md border border-slate-200/80 shadow-2xl rounded-2xl py-3.5 px-5 flex items-center justify-between gap-4 animate-in fade-in-50 slide-in-from-bottom-8 duration-200">
+              <div className="flex items-center space-x-3">
+                <div className="h-8 w-8 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs animate-pulse">
+                  {selectedIds.length}
+                </div>
+                <div>
+                  <p className="text-xs font-extrabold text-slate-800">
+                    {selectedIds.length} {selectedIds.length === 1 ? 'Patient' : 'Patients'} Selected
+                  </p>
+                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                    Batch outreach actions
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={handleBatchNotify}
+                  disabled={isPending || isBatchProcessing}
+                  className="inline-flex items-center justify-center px-4 py-2 bg-primary hover:bg-primary-hover active:bg-primary-dark disabled:bg-slate-300 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
+                >
+                  <Bell className="mr-1.5 h-3.5 w-3.5" />
+                  {isBatchProcessing ? 'Sending...' : 'Notify All'}
+                </button>
+                
+                <button
+                  onClick={handleBatchDelete}
+                  disabled={isPending || isBatchProcessing}
+                  className="inline-flex items-center justify-center px-3 py-2 bg-red-50 hover:bg-red-100 disabled:bg-slate-100 text-red-600 font-bold text-xs rounded-xl border border-red-200/50 transition cursor-pointer"
+                >
+                  <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                  Delete
+                </button>
+                
+                <button
+                  onClick={() => setSelectedIds([])}
+                  disabled={isPending || isBatchProcessing}
+                  className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition"
+                  title="Cancel selection"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </>
       )}
 

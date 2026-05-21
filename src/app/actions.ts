@@ -495,4 +495,181 @@ export async function importPatientsAction(patients: Array<{
   return { success: true, count: patients.length };
 }
 
+// BATCH SEND REMINDERS SERVER ACTION
+export async function sendBatchRemindersAction(
+  patientIds: string[]
+): Promise<{ 
+  success: boolean; 
+  successCount: number; 
+  failCount: number; 
+  failures: Array<{ name: string; error: string }>; 
+  error?: string;
+}> {
+  try {
+    const session = await AuthManager.getCurrentUser();
+    if (!session) {
+      return { success: false, successCount: 0, failCount: patientIds.length, failures: [], error: 'You must be logged in to send reminders' };
+    }
+
+    const clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      return { success: false, successCount: 0, failCount: patientIds.length, failures: [], error: 'Clinic not found' };
+    }
+
+    // 1. Free/TestPlan limits: only 1 alert allowed overall
+    if (clinic.plan === 'TestPlan') {
+      const existingPatients = await DBBroker.getPatients(clinic.id);
+      if (existingPatients.length > 1 || patientIds.length > 1) {
+        return { 
+          success: false, 
+          successCount: 0, 
+          failCount: patientIds.length, 
+          failures: [], 
+          error: 'Test Plan Limit Exceeded: The Free Test Plan only supports sending alerts to 1 patient. Please upgrade to Pro in the Billing tab!' 
+        };
+      }
+    }
+
+    // 2. Starter limits: only Email channel allowed
+    if (clinic.plan === 'Starter') {
+      const selectedPatients = await Promise.all(patientIds.map(id => DBBroker.getPatientById(id)));
+      const hasRestrictedChannels = selectedPatients.some(p => p && p.reminder_channel !== 'Email');
+      if (hasRestrictedChannels) {
+        return {
+          success: false,
+          successCount: 0,
+          failCount: patientIds.length,
+          failures: [],
+          error: 'Premium Alert Lock: SMS and WhatsApp notifications are premium channels restricted to the Growth and Pro plans. Please select Email reminders or upgrade in the Billing tab!'
+        };
+      }
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+    const failures: Array<{ name: string; error: string }> = [];
+
+    // Loop through patients and send reminders
+    for (const patientId of patientIds) {
+      try {
+        const patient = await DBBroker.getPatientById(patientId);
+        if (!patient) {
+          failCount++;
+          failures.push({ name: `ID: ${patientId}`, error: 'Patient record not found' });
+          continue;
+        }
+
+        if (patient.clinic_id !== clinic.id) {
+          failCount++;
+          failures.push({ name: patient.name, error: 'Patient does not belong to your clinic' });
+          continue;
+        }
+
+        let msg = clinic.reminder_template || '';
+        msg = msg.replace(/{{patient_name}}/g, patient.name);
+        msg = msg.replace(/{{medication_name}}/g, patient.medication_name);
+        msg = msg.replace(/{{clinic_name}}/g, clinic.name);
+        msg = msg.replace(/{{refill_date}}/g, patient.next_refill_date);
+
+        // Dispatch database record
+        await DBBroker.createReminder({
+          patient_id: patient.id,
+          clinic_id: clinic.id,
+          sent_at: new Date().toISOString(),
+          channel: patient.reminder_channel,
+          response: null,
+          status: 'sent',
+          message_body: msg
+        });
+
+        // Physical dispatch
+        if (patient.reminder_channel === 'Email') {
+          const { sendResendEmail } = require('@/lib/resend');
+          const { getProfessionalEmailTemplate } = require('@/lib/emailTemplate');
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://rxremind.us';
+          const confirmUrl = `${baseUrl}/api/confirm?id=${patient.id}`;
+          
+          const formattedHtml = getProfessionalEmailTemplate(
+            clinic.name,
+            clinic.logo_url,
+            msg,
+            confirmUrl
+          );
+          
+          const dispatchResult = await sendResendEmail(
+            patient.email, 
+            `Prescription Refill Reminder from ${clinic.name} 🛡️`, 
+            formattedHtml, 
+            'noreply@rxremind.us', 
+            clinic.name
+          );
+          if (!dispatchResult.success) {
+            failCount++;
+            failures.push({ name: patient.name, error: dispatchResult.error || 'Email dispatch rejected.' });
+            continue;
+          }
+        } else {
+          const { sendTwilioSMS } = require('@/lib/twilio');
+          const dispatchResult = await sendTwilioSMS(patient.phone, msg, patient.reminder_channel);
+          if (!dispatchResult.success) {
+            failCount++;
+            failures.push({ name: patient.name, error: dispatchResult.error || 'Twilio rejected the message request.' });
+            continue;
+          }
+        }
+
+        // Update patient status
+        await DBBroker.updatePatient(patient.id, { status: 'pending' });
+        successCount++;
+      } catch (err: any) {
+        failCount++;
+        failures.push({ name: `Patient ID ${patientId}`, error: err.message || 'Dispatch error' });
+      }
+    }
+
+    revalidatePath('/patients');
+    revalidatePath('/');
+    return { success: true, successCount, failCount, failures };
+  } catch (error: any) {
+    console.error('Batch reminders action exception:', error);
+    return {
+      success: false,
+      successCount: 0,
+      failCount: patientIds.length,
+      failures: [],
+      error: error.message || 'An unexpected batch dispatch error occurred.'
+    };
+  }
+}
+
+// BATCH DELETE PATIENTS SERVER ACTION
+export async function deleteBatchPatientsAction(patientIds: string[]): Promise<{ success: boolean; error?: string }> {
+  try {
+    const session = await AuthManager.getCurrentUser();
+    if (!session) {
+      return { success: false, error: 'You must be logged in to delete patients' };
+    }
+
+    const clinic = await DBBroker.getClinicByOwner(session.id);
+    if (!clinic) {
+      return { success: false, error: 'Clinic not found' };
+    }
+
+    for (const patientId of patientIds) {
+      const patient = await DBBroker.getPatientById(patientId);
+      if (patient && patient.clinic_id === clinic.id) {
+        await DBBroker.deletePatient(patientId);
+      }
+    }
+
+    revalidatePath('/patients');
+    revalidatePath('/');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Batch deletion action exception:', error);
+    return { success: false, error: error.message || 'An unexpected batch delete error occurred.' };
+  }
+}
+
+
 
