@@ -30,7 +30,7 @@ export async function POST(req: Request) {
       await DBBroker.updateClinic(session.clinicId, {
         plan: planName,
         subscription_active: true
-      });
+      }, true);
 
       return NextResponse.json({ url: `${origin}/billing?success=true` });
     }

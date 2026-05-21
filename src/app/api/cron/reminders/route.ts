@@ -6,6 +6,18 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
+    const authHeader = request.headers.get('Authorization');
+    const cronSecret = process.env.CRON_SECRET;
+
+    if (process.env.NODE_ENV === 'production' && !cronSecret) {
+      console.error('CRON_SECRET is not configured in production. Access denied.');
+      return NextResponse.json({ success: false, error: 'Unauthorized: System configuration error.' }, { status: 500 });
+    }
+
+    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ success: false, error: 'Unauthorized: Invalid cron credentials.' }, { status: 401 });
+    }
+
     // 1. Load all registered clinics
     const clinics = await DBBroker.getAllClinics();
     let totalScanned = 0;

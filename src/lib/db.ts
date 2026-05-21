@@ -438,13 +438,24 @@ export class DBBroker {
     }
   }
 
-  static async updateClinic(id: string, updates: Partial<Clinic>): Promise<Clinic> {
+  static async updateClinic(id: string, updates: Partial<Clinic>, useAdmin = false): Promise<Clinic> {
     if (isSupabaseEnabled && id !== 'demo-clinic-uuid-12345') {
       if (!isValidUUID(id)) throw new Error('Invalid UUID');
-      const supabase = await getSupabaseClient();
+      
+      let supabase;
+      if (useAdmin) {
+        const { createSupabaseAdmin } = await import('./supabaseServer');
+        supabase = createSupabaseAdmin() || (await getSupabaseClient());
+      } else {
+        supabase = await getSupabaseClient();
+      }
+
+      // Safely strip optional fields that are not columns in the Supabase 'clinics' table
+      const { subscription_active, ...dbUpdates } = updates as any;
+
       const { data, error } = await supabase
         .from('clinics')
-        .update(updates)
+        .update(dbUpdates)
         .eq('id', id)
         .select()
         .single();

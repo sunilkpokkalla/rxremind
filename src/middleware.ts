@@ -89,9 +89,10 @@ export async function middleware(request: NextRequest) {
     pathname === '/forgot-password' ||
     pathname === '/reset-password';
 
-  // Gracefully bypass Supabase validation for the mock demo account to guarantee it works instantly
+  // Gracefully bypass Supabase validation for the mock demo account to guarantee it works instantly (development/staging only)
+  const isProduction = process.env.NODE_ENV === 'production';
   let isDemoSession = false;
-  if (customSession?.value) {
+  if (!isProduction && customSession?.value) {
     try {
       const decodedValue = decodeURIComponent(customSession.value);
       const sessionObj = JSON.parse(decodedValue);
@@ -107,9 +108,12 @@ export async function middleware(request: NextRequest) {
   // EXCEPT for the demo walkthrough session which is allowed to bypass Supabase.
   const isAuthenticated = isDemoSession 
     ? true 
-    : (isSupabaseEnabled ? hasSupabaseSession : hasValidCustomSession);
+    : (isSupabaseEnabled ? hasSupabaseSession : (!isProduction && hasValidCustomSession));
 
   if (!isAuthenticated && !isAuthPage) {
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Unauthorized: Authentication required.' }, { status: 401 });
+    }
     const loginUrl = new URL('/login', request.url);
     // If we have a valid custom cookie session but no Supabase session, the token is stale/expired.
     // Redirect with a database access denied flag to prompt email check or session re-login.

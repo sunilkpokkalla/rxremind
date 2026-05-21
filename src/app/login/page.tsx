@@ -54,6 +54,12 @@ function LoginForm() {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
+      {isMounted && (
+        <Script 
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js" 
+          strategy="afterInteractive" 
+        />
+      )}
       {/* Left panel: Sign In Form */}
       <div className="flex-1 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-20 xl:px-24 bg-white z-10 shadow-xl">
         <div className="mx-auto w-full max-w-md">
@@ -183,7 +189,16 @@ function LoginForm() {
               </div>
             </div>
 
-
+            {/* Turnstile CAPTCHA */}
+            {isMounted && process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && (
+              <div className="flex justify-center my-4">
+                <div 
+                  className="cf-turnstile" 
+                  data-sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY}
+                  data-theme="light"
+                />
+              </div>
+            )}
 
             <div>
               <button

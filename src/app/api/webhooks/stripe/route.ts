@@ -15,6 +15,8 @@ export async function POST(req: Request) {
 
   let event: any;
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   if (webhookSecret) {
     try {
       event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
@@ -23,6 +25,10 @@ export async function POST(req: Request) {
       return new Response(`Webhook Error: Signature verification failed: ${err.message}`, { status: 400 });
     }
   } else {
+    if (isProduction) {
+      console.error('STRIPE_WEBHOOK_SECRET is missing in production environment. Webhook execution aborted.');
+      return new Response('Webhook Error: Webhook secret is not configured.', { status: 500 });
+    }
     // Development sandbox fallback if webhook secret is not bound in local environments
     console.warn('STRIPE_WEBHOOK_SECRET is not configured. Signature verification bypassed (SANDBOX ONLY).');
     try {
@@ -40,11 +46,11 @@ export async function POST(req: Request) {
       const planName = session.metadata?.planName as 'Starter' | 'Growth' | 'Pro';
 
       if (clinicId && planName) {
-        // Safe database upgrade mutation
+        // Safe database upgrade mutation using service_role bypass
         await DBBroker.updateClinic(clinicId, { 
           plan: planName,
           subscription_active: true
-        });
+        }, true);
         console.log(`Clinic ${clinicId} successfully upgraded to tier ${planName} via Stripe webhook.`);
       } else {
         console.error('Webhook session metadata was missing clinicId or planName:', session.metadata);

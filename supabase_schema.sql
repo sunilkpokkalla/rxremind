@@ -113,6 +113,25 @@ CREATE POLICY "Users can delete reminders from their clinic"
   ON reminders FOR DELETE 
   USING (clinic_id IN (SELECT id FROM clinics WHERE owner_id = auth.uid()));
 
+-- --- CLINICS PLAN PROTECTION TRIGGER ---
+-- Only allow updates to 'plan' if executed by service_role/postgres (bypass for authenticated/anon roles)
+CREATE OR REPLACE FUNCTION protect_clinic_plan() 
+RETURNS TRIGGER AS $$
+BEGIN
+  IF (NEW.plan IS DISTINCT FROM OLD.plan) THEN
+    IF current_setting('role', true) IN ('authenticated', 'anon') THEN
+      RAISE EXCEPTION 'Direct database updates to the clinic plan are prohibited. Upgrades must be processed via Stripe checkout.';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER protect_clinic_plan_trigger
+BEFORE UPDATE ON clinics
+FOR EACH ROW
+EXECUTE FUNCTION protect_clinic_plan();
+
 -- ====================================================================
 -- AUTOMATED REMINDERS SCHEDULER & CRON VIEW (HELPFUL HINT)
 -- ====================================================================

@@ -8,7 +8,38 @@ import { headers } from 'next/headers';
 
 // SECURE BACKEND CAPTCHA TOKEN VERIFICATION
 async function verifyTurnstileToken(token: string | null, email?: string): Promise<{ success: boolean; error?: string }> {
-  return { success: true };
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  if (!secretKey || secretKey.includes('placeholder')) {
+    console.warn('TURNSTILE_SECRET_KEY is not configured. Bypassing Turnstile CAPTCHA (DEVELOPMENT ONLY).');
+    return { success: true };
+  }
+
+  if (!token) {
+    return { success: false, error: 'Security verification failed: Turnstile token is missing.' };
+  }
+
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: new URLSearchParams({
+        secret: secretKey,
+        response: token,
+      }),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      return { success: false, error: 'Security verification failed. Please refresh and try again.' };
+    }
+
+    return { success: true };
+  } catch (err: any) {
+    console.error('Turnstile verification error:', err);
+    return { success: false, error: 'Security verification gateway timed out.' };
+  }
 }
 
 // SIGN IN ACTION
@@ -290,10 +321,14 @@ export async function updateSettingsAction(clinicId: string, prevState: any, for
 
 // UPGRADE PLAN SERVER ACTION (STRIPE SIMULATOR)
 export async function upgradePlanAction(clinicId: string, selectedPlan: 'Starter' | 'Growth' | 'Pro') {
+  const isProduction = process.env.NODE_ENV === 'production';
+  if (isProduction) {
+    return { success: false, error: 'Unauthorized: Manual upgrades are disabled in production.' };
+  }
   await DBBroker.updateClinic(clinicId, { 
     plan: selectedPlan,
     subscription_active: true
-  });
+  }, true);
   revalidatePath('/billing');
   revalidatePath('/');
   return { success: true, message: `Subscription successfully upgraded to ${selectedPlan} Plan!` };

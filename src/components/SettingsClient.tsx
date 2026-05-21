@@ -274,6 +274,37 @@ export default function SettingsClient({ clinic, gatewayStatus }: SettingsClient
                 3. Outreach Message Template Editor
               </h3>
 
+              {/* Presets Selector Dropdown */}
+              <div className="space-y-1.5 p-3.5 bg-primary-light/30 border border-primary/10 rounded-2xl">
+                <label className="block text-xs font-bold text-primary-dark">
+                  💡 Select Preset Message Template
+                </label>
+                <select
+                  onChange={(e) => {
+                    const selectedValue = e.target.value;
+                    if (selectedValue) {
+                      setTemplateText(selectedValue);
+                    }
+                  }}
+                  className="block w-full px-3 py-2 border border-slate-200 rounded-xl text-slate-800 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-xs bg-white transition cursor-pointer"
+                  defaultValue=""
+                >
+                  <option value="" disabled>-- Choose a pre-configured template preset --</option>
+                  <option value="Hi {{patient_name}}, this is {{clinic_name}} reminding you your prescription for {{medication_name}} is due on {{refill_date}}. Reply YES to confirm if you would like us to prepare this refill for you!">
+                    Standard Refill Confirmation (SMS / WhatsApp)
+                  </option>
+                  <option value="Hi {{patient_name}}, your prescription refill of {{medication_name}} is ready for pickup at {{clinic_name}}! Please stop by during our business hours. Thank you!">
+                    Refill Ready for Pickup Notification
+                  </option>
+                  <option value="Hello {{patient_name}}, this is {{clinic_name}}. Your prescription for {{medication_name}} is due on {{refill_date}}. Please reply YES to authorize our doctor to renew your refill sequence.">
+                    Doctor Authorization / Renewal Request
+                  </option>
+                  <option value="Hello {{patient_name}}, this is a friendly care reminder from {{clinic_name}} to stay on track with your daily doses of {{medication_name}}. If you need any assistance or have questions, please reach out.">
+                    Medication Adherence & Care Alert
+                  </option>
+                </select>
+              </div>
+
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
                   <label htmlFor="reminder_template" className="block text-xs font-bold text-slate-700">
